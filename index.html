@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#24174F">
 <title>Sueldito</title>
 <style>:root{padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px);box-sizing:border-box}[hidden]{display:none!important}</style>
@@ -178,6 +179,7 @@ nav.tabs button[aria-current="page"]{color:var(--purple);font-weight:600}
 <div id="sheet"></div>
 <div id="toast"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
 'use strict';
 /* ================= Datos base ================= */
@@ -200,17 +202,92 @@ const MES3 = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov',
 const DIA3 = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 const DIAL = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
 
-const CFG0 = { valorHora:3075, horasSem:20, contrato:'indefinido', afp:'Uno', afpPct:10.46, salud:'fonasa', saludPct:7, cesPct:0.6,
+const CFG0 = { valorHora:0, horasSem:0, contrato:'indefinido', afp:'Uno', afpPct:10.46, salud:'fonasa', saludPct:7, cesPct:0.6,
   rNoct:50, rDom:30, rNoctDom:20, rExtra:50, extraSuma:true, nIni:'22:00', nFin:'06:00', breakMin:30, cierre:'02:00',
   gratOn:true, gratPct:25, imm:553553, presPct:20, tema:'auto' };
 
 /* ================= Almacenamiento ================= */
-const KEY = 'sueldito.v1';
-let mem = null;
-function load(){ try{ const t = localStorage.getItem(KEY); if(t) return JSON.parse(t); }catch(e){} return mem; }
-function save(){ mem = D; try{ localStorage.setItem(KEY, JSON.stringify(D)); }catch(e){} }
-let D = load() || { v:1, onboarded:false, cfg:{...CFG0}, shifts:[], pres:{}, haberes:[], ferOff:[], ferExtra:[], lastSeen:0, ejemplo:false };
-D.cfg = {...CFG0, ...D.cfg};
+const SB_URL = 'https://ffmpdtozmarlmnauiuvf.supabase.co';
+const SB_KEY = 'sb_publishable_LxBezHj77R3yeCDHgu4otg_YxGdMWCR';
+const LEGACY_KEY = 'sueldito.v1';
+let sb = null, USER = null, KEY = null, mem = null, RECOVERY = false;
+const blank = () => ({ v:2, onboarded:false, cfg:{...CFG0}, shifts:[], pres:{}, haberes:[], ferOff:[], ferExtra:[], demoIds:[], lastSeen:0, ejemplo:false, pend:{cfg:false,up:[],del:[]} });
+function fix(d){ const b=blank(); d={...b,...d}; d.cfg={...CFG0,...d.cfg}; d.pend={...b.pend,...(d.pend||{})}; return d; }
+function lsGet(k){ try{ const t=localStorage.getItem(k); if(t) return JSON.parse(t); }catch(e){} return null; }
+function saveLocal(){ mem=D; if(!KEY) return; try{ localStorage.setItem(KEY, JSON.stringify(D)); }catch(e){} }
+function save(){ D.pend.cfg=true; saveLocal(); schedFlush(); }
+function qUp(id){ const p=D.pend; p.del=p.del.filter(x=>x!==id); if(!p.up.includes(id)) p.up.push(id); }
+function qDel(id){ const p=D.pend; p.up=p.up.filter(x=>x!==id); if(!p.del.includes(id)) p.del.push(id); }
+let D = blank();
+
+/* ================= Nube ================= */
+const t5 = t => t ? String(t).slice(0,5) : '';
+const toRow = s => ({ id:s.id, user_id:USER.id, fecha:s.f, entrada:s.e, salida:s.s, break_ida:s.bi||null, break_vuelta:s.bv||null, sin_break:!!s.sinBreak,
+  extra:s.extra||'no', extra_desde:s.xd||null, extra_hasta:s.xh||null, licencia:!!s.lic, updated_at:new Date().toISOString() });
+const fromRow = r => ({ id:r.id, f:r.fecha, e:t5(r.entrada), s:t5(r.salida), bi:t5(r.break_ida), bv:t5(r.break_vuelta), sinBreak:!!r.sin_break,
+  extra:r.extra||'no', xd:t5(r.extra_desde), xh:t5(r.extra_hasta), lic:!!r.licencia });
+const cfgPayload = () => ({ onboarded:D.onboarded, cfg:D.cfg, pres:D.pres, haberes:D.haberes, ferOff:D.ferOff, ferExtra:D.ferExtra, demoIds:D.demoIds, ejemplo:D.ejemplo });
+let flushT=null, flushing=false, SYNC='ok';
+function setSync(v){ SYNC=v; const el=document.getElementById('sync-st'); if(el) el.textContent=syncText(); }
+const syncText = () => SYNC==='ok' ? 'Todo guardado en la nube' : (SYNC==='subiendo' ? 'Guardando…' : 'Cambios pendientes: se guardarán al recuperar conexión');
+const hasPend = () => D.pend.cfg || D.pend.up.length>0 || D.pend.del.length>0;
+function schedFlush(){ clearTimeout(flushT); flushT=setTimeout(flush,500); }
+async function flush(){
+  if(!sb || !USER || flushing) return hasPend()?false:true;
+  if(!hasPend()){ setSync('ok'); return true; }
+  flushing=true; setSync('subiendo'); let ok=true;
+  try{
+    const del=[...D.pend.del], up=[...D.pend.up], cfg=D.pend.cfg;
+    if(del.length){ const {error}=await sb.from('turnos').delete().in('id',del); if(error) throw error; D.pend.del=D.pend.del.filter(x=>!del.includes(x)); }
+    if(up.length){ const rows=D.shifts.filter(x=>up.includes(x.id)).map(toRow);
+      if(rows.length){ const {error}=await sb.from('turnos').upsert(rows); if(error) throw error; }
+      D.pend.up=D.pend.up.filter(x=>!up.includes(x)); }
+    if(cfg){ D.pend.cfg=false; const {error}=await sb.from('configuracion').upsert({user_id:USER.id, datos:cfgPayload(), updated_at:new Date().toISOString()}); if(error){ D.pend.cfg=true; throw error; } }
+  }catch(e){ ok=false; console.warn('Sueldito: no se pudo guardar en la nube', e); }
+  flushing=false; saveLocal();
+  if(ok && hasPend()){ schedFlush(); return true; }
+  setSync(ok?'ok':'pendiente'); return ok;
+}
+async function pull(){
+  const [c,t]=await Promise.all([ sb.from('configuracion').select('datos').maybeSingle(), sb.from('turnos').select('*') ]);
+  if(c.error) throw c.error; if(t.error) throw t.error;
+  return { datos:c.data?c.data.datos:null, shifts:(t.data||[]).map(fromRow) };
+}
+function adoptRemote(r){ const keep={lastSeen:D.lastSeen}; D=fix({...r.datos, shifts:r.shifts, ...keep}); saveLocal(); }
+async function startSession(user){
+  if(RECOVERY) return;
+  USER=user; KEY='sueldito.v2.'+user.id; UI.step='loading'; render();
+  const local=lsGet(KEY); D = local ? fix(local) : blank();
+  let online=true;
+  try{
+    if(local && hasPend()){ const ok=await flush(); if(!ok) throw new Error('sin conexión'); }
+    const r=await pull();
+    if(r.datos){ adoptRemote(r); }
+    else if(local && local.onboarded){ D.shifts.forEach(x=>qUp(x.id)); save(); }
+    else {
+      const old=lsGet(LEGACY_KEY);
+      if(old && old.onboarded){ D=fix({...old, shifts:(old.shifts||[]).map(x=>({...x,id:uid()})), pend:undefined});
+        D.demoIds=D.shifts.filter(x=>x.demo).map(x=>x.id); D.shifts.forEach(x=>{ delete x.demo; qUp(x.id); }); save();
+        try{ localStorage.removeItem(LEGACY_KEY); }catch(e){}
+        setTimeout(()=>toast('Subimos a tu cuenta los turnos que tenías en este teléfono'),600); }
+      else { D=blank(); saveLocal(); }
+    }
+  }catch(e){ online=false; console.warn('Sueldito: sin conexión con la nube', e);
+    if(!local){ UI.step='error'; render(); return; }
+    setSync('pendiente'); setTimeout(()=>toast('Sin conexión. Mostrando lo guardado en este teléfono.'),500); }
+  if(RECOVERY) return;
+  applyTheme(); UI.step = D.onboarded ? null : 'welcome'; UI.tab='resumen'; UI.animate=true;
+  afterLoad(); render();
+}
+async function refreshFromCloud(){
+  if(!sb || !USER || UI.step || UI.sheet || flushing || hasPend()) return;
+  try{ const r=await pull(); if(r.datos && !hasPend() && !UI.sheet){ adoptRemote(r); applyTheme(); render(); } }catch(e){}
+}
+const AUTH_ERR = [[/invalid login/i,'Correo o contraseña incorrectos.'],[/already registered|already been registered/i,'Ese correo ya tiene una cuenta. Inicia sesión.'],
+  [/not confirmed/i,'Falta confirmar tu correo. Revisa tu bandeja de entrada.'],[/rate limit|too many/i,'Demasiados intentos. Espera unos minutos y prueba de nuevo.'],
+  [/password should|weak/i,'La contraseña debe tener al menos 8 caracteres.'],[/valid email|invalid format|invalid email/i,'Escribe un correo válido.'],
+  [/failed to fetch|network/i,'No hay conexión. Revisa tu internet e inténtalo de nuevo.'],[/signups? (not allowed|disabled)/i,'El registro está cerrado por ahora.']];
+const authMsg = e => { const m=(e&&e.message)||String(e); const f=AUTH_ERR.find(x=>x[0].test(m)); return f?f[1]:'No se pudo completar: '+m; };
 
 /* ================= Utilidades ================= */
 const pad = n => String(n).padStart(2,'0');
@@ -222,7 +299,7 @@ const money = n => { n=Math.round(n); return (n<0?'-':'')+'$'+String(Math.abs(n)
 const hrs = m => Math.round(m/60*100)/100;
 const fh = h => h.toFixed(2).replace('.',',')+' h';
 const esc = s => String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const uid = () => Math.random().toString(36).slice(2,10);
+const uid = () => (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{ const r=Math.random()*16|0; return (c==='x'?r:(r&3|8)).toString(16); });
 const toMin = t => { const [h,m]=t.split(':').map(Number); return h*60+m; };
 let NOW = () => new Date();
 
@@ -349,7 +426,7 @@ function validate(sh){
 const labelDia = d => DIA3[d.getDay()].toLowerCase()+' '+d.getDate()+' '+MES3[d.getMonth()];
 
 /* ================= Estado de interfaz ================= */
-const UI = { tab:'resumen', ym:ymOf(new Date()), vista:'lista', selDay:null, modo:'G', step:D.onboarded?null:'welcome',
+const UI = { tab:'resumen', ym:ymOf(new Date()), vista:'lista', selDay:null, modo:'G', step:'loading', auth:{modo:'login',msg:'',ok:'',busy:false,email:''},
   sheet:null, animate:true, earned:[], fromG:null, toast:null, cfgDraft:null, habForm:false, confirmBorrar:false, verFer:false };
 
 /* ================= Iconos ================= */
@@ -522,6 +599,9 @@ function vAjustes(){
   const chk=(l,k)=>`<label class="set-r"><span>${l}</span><input type="checkbox" id="cfg-${k}" data-cfg="${k}" ${c[k]?'checked':''} style="width:22px;height:22px;accent-color:var(--purple)"></label>`;
   const year=UI.ym.slice(0,4), fer=FERIADOS.filter(f=>f[0].startsWith(year));
   return `<h1 class="h1">Ajustes</h1>
+  <section class="col gap6"><span class="set-t">Mi cuenta</span><div class="card">
+    <div class="set-r"><span class="col" style="min-width:0"><span style="overflow-wrap:anywhere">${USER?esc(USER.email||''):'Sin sesión'}</span><span class="xs muted" id="sync-st">${syncText()}</span></span></div>
+    <button class="set-r c-purple" style="width:100%;border-left:0;border-right:0;border-bottom:0;background:none;font-weight:600" data-a="logout"><span>Cerrar sesión</span>${I.arrow}</button></div></section>
   <section class="col gap6"><span class="set-t">Apariencia</span>
     <div class="seg c3">${[['auto','Automático'],['light','Claro'],['dark','Oscuro']].map(([v,l])=>`<button data-a="tema" data-v="${v}" aria-pressed="${c.tema===v}">${l}</button>`).join('')}</div></section>
   <section class="col gap6"><span class="set-t">Contrato</span><div class="card">
@@ -554,11 +634,37 @@ function vAjustes(){
       <input type="checkbox" id="fer-${f}" data-a="ferToggle" data-f="${f}" ${D.ferOff.includes(f)?'':'checked'} style="width:22px;height:22px;accent-color:var(--purple)"></label>`).join('')
       +D.ferExtra.map(x=>`<div class="set-r"><span>${dt(x.f).getDate()} ${MES3[Number(x.f.slice(5,7))-1]} ${x.f.slice(0,4)} · agregado por ti</span><button class="icon-btn c-danger" data-a="ferDel" data-f="${x.f}" aria-label="Quitar feriado">${I.trash}</button></div>`).join('')
       +`<div class="set-r"><label for="fer-new">Agregar fecha</label><span class="row gap8"><input type="date" id="fer-new" style="height:36px;border:1px solid var(--border2);border-radius:10px;background:var(--bg);padding:0 8px"><button class="tag c-purple" style="border:0;min-height:36px" data-a="ferAdd">Agregar</button></span></div>`:''}</div></section>
-  <section class="col gap6"><span class="set-t">Datos de prueba</span><div class="card pad col gap10">
-    <span class="small muted">Esta versión guarda todo solo en este navegador. Si borras los datos del navegador, se pierden.</span>
+  <section class="col gap6"><span class="set-t">Mis datos</span><div class="card pad col gap10">
+    <span class="small muted">Tus turnos y tu configuración se guardan en tu cuenta. El dinero no se guarda: se calcula en tu teléfono.</span>
     <button class="btn ghost" data-a="ejemplo">Cargar turnos de ejemplo en este mes</button>
     ${UI.confirmBorrar?`<div class="grid2"><button class="btn ghost" data-a="borrarNo">Cancelar</button><button class="btn danger" data-a="borrarSi">Sí, borrar todo</button></div>`:`<button class="btn danger" data-a="borrar">Borrar todos mis datos</button>`}</div></section>
   <section class="col gap6"><span class="set-t">Sobre Sueldito</span><div class="card pad small" style="line-height:1.5">Sueldito es una referencia para ordenar tus finanzas: te muestra cuánto llevas ganado y cuánto viene según los turnos que registras. Los montos son aproximados. Minutos de diferencia en tus marcas de entrada, salida o break, y ajustes de tu empleador, pueden cambiar el resultado. Tu liquidación oficial es la que vale.</div></section>`;
+}
+function vLoading(){ return `<main style="justify-content:center;align-items:center"><span class="label c-purple" style="letter-spacing:.6px">SUELDITO</span><span class="muted">Cargando tus datos…</span></main>`; }
+function vError(){ return `<main style="justify-content:center;gap:16px"><h1 class="h1">No pudimos cargar tus datos</h1><p class="muted">Necesitas conexión a internet la primera vez que entras en este dispositivo.</p><button class="btn" data-a="retry">Reintentar</button><button class="btn ghost" data-a="logout">Cerrar sesión</button></main>`; }
+function vAuth(){
+  const a=UI.auth, reg=a.modo==='registro', rec=a.modo==='recuperar';
+  return `<main style="padding-top:40px;gap:18px">
+    <div class="col gap8"><span class="label c-purple" style="letter-spacing:.6px">SUELDITO</span>
+      <h1 class="num" style="font-size:30px;letter-spacing:-.6px">${rec?'Recupera tu contraseña':(reg?'Crea tu cuenta':'Inicia sesión')}</h1>
+      <span class="muted">${rec?'Te enviaremos un enlace para crear una contraseña nueva.':(reg?'Tus turnos y tu configuración quedan guardados en tu cuenta.':'Entra para ver tus turnos desde cualquier dispositivo.')}</span></div>
+    ${a.msg?`<div class="note err" role="alert">${I.info}<span>${esc(a.msg)}</span></div>`:''}
+    ${a.ok?`<div class="note" role="status">${I.info}<span>${esc(a.ok)}</span></div>`:''}
+    <div class="field"><label class="label" for="au-e">Correo</label><input class="input" id="au-e" type="email" autocomplete="email" inputmode="email" placeholder="tu@correo.com" value="${esc(a.email)}"></div>
+    ${rec?'':`<div class="field"><label class="label" for="au-p">Contraseña</label><input class="input" id="au-p" type="password" autocomplete="${reg?'new-password':'current-password'}" placeholder="${reg?'Mínimo 8 caracteres':'Tu contraseña'}"></div>`}
+    ${reg?`<label class="check small"><input type="checkbox" id="au-ok"><span>Entiendo que los montos son aproximados y acepto que mis turnos y mi configuración se guarden en mi cuenta.</span></label>`:''}
+    <button class="btn" style="height:54px;border-radius:16px;font-size:16px" data-a="authGo" ${a.busy?'disabled':''}>${a.busy?'Un momento…':(rec?'Enviar enlace':(reg?'Crear cuenta':'Entrar'))}</button>
+    ${rec?`<button class="btn ghost" data-a="authModo" data-m="login">Volver a iniciar sesión</button>`
+      :`<span class="muted" style="text-align:center">${reg?'¿Ya tienes cuenta?':'¿Primera vez?'} <button class="c-purple label" style="border:0;background:none;min-height:32px;font-size:14px" data-a="authModo" data-m="${reg?'login':'registro'}">${reg?'Inicia sesión':'Crea tu cuenta'}</button></span>
+      ${reg?'':`<button class="c-purple label" style="border:0;background:none;min-height:32px" data-a="authModo" data-m="recuperar">Olvidé mi contraseña</button>`}`}
+  </main>`;
+}
+function vNewPass(){
+  const a=UI.auth;
+  return `<main style="padding-top:40px;gap:18px"><div class="col gap8"><span class="label c-purple" style="letter-spacing:.6px">SUELDITO</span><h1 class="num" style="font-size:30px;letter-spacing:-.6px">Crea una contraseña nueva</h1></div>
+    ${a.msg?`<div class="note err" role="alert">${I.info}<span>${esc(a.msg)}</span></div>`:''}
+    <div class="field"><label class="label" for="np-p">Contraseña nueva</label><input class="input" id="np-p" type="password" autocomplete="new-password" placeholder="Mínimo 8 caracteres"></div>
+    <button class="btn" style="height:54px;border-radius:16px;font-size:16px" data-a="newPass" ${a.busy?'disabled':''}>Guardar contraseña</button></main>`;
 }
 function vWelcome(){
   return `<div class="welcome">
@@ -579,8 +685,8 @@ function vConfig(){
   return `<main style="padding-bottom:28px;gap:18px">
     <div class="col gap10"><span class="label muted">Configuración inicial</span><h1 class="num" style="font-size:28px;letter-spacing:-.5px">Tu contrato</h1>
       <span class="muted">Lo encuentras en tu contrato o en tu liquidación. Puedes cambiarlo después en Ajustes.</span></div>
-    <div class="grid2"><div class="field"><label class="label" for="ob-vh">Valor hora ($)</label><input class="input num" id="ob-vh" type="number" inputmode="numeric" min="0" value="${c.valorHora}"></div>
-      <div class="field"><label class="label" for="ob-hs">Horas semanales</label><input class="input num" id="ob-hs" type="number" inputmode="decimal" min="1" step="0.5" value="${c.horasSem}"></div></div>
+    <div class="grid2"><div class="field"><label class="label" for="ob-vh">Valor hora ($)</label><input class="input num" id="ob-vh" type="number" inputmode="numeric" min="0" placeholder="Ej. 3075" value="${c.valorHora||''}"></div>
+      <div class="field"><label class="label" for="ob-hs">Horas semanales</label><input class="input num" id="ob-hs" type="number" inputmode="decimal" min="1" step="0.5" placeholder="Ej. 20" value="${c.horasSem||''}"></div></div>
     <div class="field"><span class="label">Tipo de contrato</span><div class="seg c2"><button data-a="obSet" data-k="contrato" data-v="indefinido" aria-pressed="${c.contrato==='indefinido'}">Indefinido</button><button data-a="obSet" data-k="contrato" data-v="plazo" aria-pressed="${c.contrato==='plazo'}">Plazo fijo</button></div>
       <span class="small muted">Define si se descuenta el seguro de cesantía (0,6%).</span></div>
     <div class="field"><span class="label">Tu AFP</span><div class="card" style="overflow:hidden" role="radiogroup" aria-label="AFP">
@@ -652,7 +758,11 @@ function sheetAviso(){
 function applyTheme(){ const r=document.documentElement; if(D.cfg.tema==='auto'){ if(r.dataset.themeBy==='app'){ delete r.dataset.theme; delete r.dataset.themeBy; } } else { r.dataset.theme=D.cfg.tema; r.dataset.themeBy='app'; } }
 function render(){
   const app=document.getElementById('app'), sc=app.querySelector('main') ? app.querySelector('main').scrollTop : 0;
-  if(UI.step==='welcome'){ app.innerHTML=vWelcome(); }
+  if(UI.step==='loading'){ app.innerHTML=vLoading(); }
+  else if(UI.step==='auth'){ app.innerHTML=vAuth(); }
+  else if(UI.step==='newpass'){ app.innerHTML=vNewPass(); }
+  else if(UI.step==='error'){ app.innerHTML=vError(); }
+  else if(UI.step==='welcome'){ app.innerHTML=vWelcome(); }
   else if(UI.step==='config'){ app.innerHTML=vConfig(); }
   else {
     const body={resumen:vResumen,turnos:vTurnos,liq:vLiq,ajustes:vAjustes}[UI.tab]();
@@ -715,18 +825,55 @@ function openNew(f){
 }
 function openEdit(id){ const s=D.shifts.find(x=>x.id===id); if(!s) return; UI.sheet={type:'shift',edit:true,d:{...s}}; renderSheet(); }
 let lastDeleted=null;
-function delShift(id){ const i=D.shifts.findIndex(x=>x.id===id); if(i<0) return; lastDeleted=D.shifts[i]; D.shifts.splice(i,1); save(); UI.sheet=null; render(); toast('Turno borrado',true); }
+function delShift(id){ const i=D.shifts.findIndex(x=>x.id===id); if(i<0) return; lastDeleted=D.shifts[i]; D.shifts.splice(i,1); qDel(id); D.demoIds=D.demoIds.filter(x=>x!==id); save(); UI.sheet=null; render(); toast('Turno borrado',true); }
 function ejemplo(){
-  const now=NOW(), y=now.getFullYear(), m=now.getMonth(), days=new Date(y,m+1,0).getDate(), out=[]; let w=0;
+  if(!(D.cfg.valorHora>0)) D.cfg.valorHora=3075; if(!(D.cfg.horasSem>0)) D.cfg.horasSem=20;
+  D.shifts.filter(s=>D.demoIds.includes(s.id)).forEach(s=>qDel(s.id));
+  D.shifts=D.shifts.filter(s=>!D.demoIds.includes(s.id)); D.demoIds=[];
+  const now=NOW(), y=now.getFullYear(), m=now.getMonth(), days=new Date(y,m+1,0).getDate(); let w=0;
   for(let d=1;d<=days;d++){ const x=new Date(y,m,d), wd=x.getDay(), f=ymd(x);
     if(wd===1) w++;
-    const add=(e,s)=>out.push({id:uid(),f,e,s,bi:'',bv:'',sinBreak:false,extra:'no',xd:'',xh:'',lic:false,demo:true});
+    const add=(e,s)=>{ const sh={id:uid(),f,e,s,bi:'',bv:'',sinBreak:false,extra:'no',xd:'',xh:'',lic:false}; const [a,b]=bounds(sh);
+      if(D.shifts.some(o=>{ const [oa,ob]=bounds(o); return a<ob && oa<b; })) return;
+      D.shifts.push(sh); D.demoIds.push(sh.id); qUp(sh.id); };
     if(w%3===2){ if(wd===3) add('19:00','02:00'); if(wd===4) add('17:30','00:00'); if(wd===6) add('23:00','07:00'); }
     else { if(wd===2) add('23:00','07:00'); if(wd===3) add('19:00','02:00'); if(wd===4) add('17:30','00:00'); }
   }
-  D.shifts=D.shifts.filter(s=>!s.demo && s.f.slice(0,7)!==ymOf(now)).concat(out);
   if(!D.haberes.some(h=>h.demo)) D.haberes.push({id:uid(),nombre:'Beca (ejemplo)',monto:75000,imp:true,tipo:'mensual',demo:true});
   D.ejemplo=true; save();
+}
+async function authGo(){
+  const a=UI.auth, em=(document.getElementById('au-e')||{}).value||'', pw=(document.getElementById('au-p')||{}).value||'';
+  a.email=em.trim(); a.msg=''; a.ok='';
+  if(!sb){ a.msg='No hay conexión. Revisa tu internet y recarga la página.'; render(); return; }
+  if(!/^\S+@\S+\.\S+$/.test(a.email)){ a.msg='Escribe un correo válido.'; render(); return; }
+  if(a.modo!=='recuperar' && pw.length<8){ a.msg=a.modo==='registro'?'La contraseña debe tener al menos 8 caracteres.':'Escribe tu contraseña.'; render(); return; }
+  if(a.modo==='registro' && !document.getElementById('au-ok').checked){ a.msg='Marca la casilla para continuar.'; render(); return; }
+  a.busy=true; render();
+  try{
+    if(a.modo==='recuperar'){ const {error}=await sb.auth.resetPasswordForEmail(a.email,{redirectTo:location.origin+location.pathname}); if(error) throw error;
+      a.ok='Si ese correo tiene cuenta, te llegará un enlace en unos minutos.'; }
+    else if(a.modo==='registro'){ const {data,error}=await sb.auth.signUp({email:a.email,password:pw,options:{emailRedirectTo:location.origin+location.pathname}}); if(error) throw error;
+      if(data.user && data.user.identities && data.user.identities.length===0) throw new Error('User already registered');
+      if(!data.session){ a.modo='login'; a.ok='Cuenta creada. Te enviamos un correo para confirmarla; después inicia sesión aquí.'; } }
+    else { const {error}=await sb.auth.signInWithPassword({email:a.email,password:pw}); if(error) throw error; }
+  }catch(e){ a.msg=authMsg(e); }
+  a.busy=false; if(UI.step==='auth') render();
+}
+async function newPass(){
+  const a=UI.auth, pw=(document.getElementById('np-p')||{}).value||''; a.msg='';
+  if(pw.length<8){ a.msg='La contraseña debe tener al menos 8 caracteres.'; render(); return; }
+  a.busy=true; render();
+  const {data,error}=await sb.auth.updateUser({password:pw}); a.busy=false;
+  if(error){ a.msg=authMsg(error); render(); return; }
+  RECOVERY=false; toast('Contraseña actualizada'); startSession(data.user);
+}
+async function logout(){
+  if(hasPend()) await flush();
+  const k=KEY, pend=hasPend();
+  try{ if(sb) await sb.auth.signOut(); }catch(e){}
+  if(!pend && k){ try{ localStorage.removeItem(k); }catch(e){} }
+  USER=null; KEY=null; D=blank(); UI.auth={modo:'login',msg:'',ok:'',busy:false,email:''}; UI.step='auth'; UI.sheet=null; applyTheme(); render();
 }
 function act(a, el, ev){
   const ds=el.dataset;
@@ -743,11 +890,11 @@ function act(a, el, ev){
     case 'close': UI.sheet=null; renderSheet(); break;
     case 'closeScrim': if(ev.target===el){ UI.sheet=null; renderSheet(); } break;
     case 'sfExtra': UI.sheet.d.extra=ds.v; renderSheet(); break;
-    case 'sfSave': { const d=UI.sheet.d; if(validate(d).err.length) break; const cl={...d}; delete cl.demo; if(cl.lic) cl.extra='no';
+    case 'sfSave': { const d=UI.sheet.d; if(validate(d).err.length) break; const cl={...d}; if(cl.lic) cl.extra='no'; qUp(cl.id);
       const i=D.shifts.findIndex(x=>x.id===d.id); if(i>=0) D.shifts[i]=cl; else D.shifts.push(cl);
       save(); UI.ym=d.f.slice(0,7); UI.selDay=d.f; UI.sheet=null; UI.animate=UI.tab==='resumen'; render(); toast(i>=0?'Turno actualizado':'Turno guardado'); break; }
     case 'sfDel': delShift(UI.sheet.d.id); break;
-    case 'undo': if(lastDeleted){ D.shifts.push(lastDeleted); lastDeleted=null; save(); UI.toast=null; render(); } break;
+    case 'undo': if(lastDeleted){ D.shifts.push(lastDeleted); qUp(lastDeleted.id); lastDeleted=null; save(); UI.toast=null; render(); } break;
     case 'tema': D.cfg.tema=ds.v; save(); applyTheme(); render(); break;
     case 'habForm': UI.habForm=true; render(); break;
     case 'habCancel': UI.habForm=false; render(); break;
@@ -760,11 +907,16 @@ function act(a, el, ev){
     case 'ferAdd': { const f=document.getElementById('fer-new').value; if(!f){ toast('Elige una fecha.'); break; } if(!D.ferExtra.some(x=>x.f===f)) D.ferExtra.push({f}); save(); render(); break; }
     case 'ferDel': D.ferExtra=D.ferExtra.filter(x=>x.f!==ds.f); save(); render(); break;
     case 'ejemplo': ejemplo(); UI.ym=ymOf(NOW()); UI.tab='resumen'; UI.animate=true; UI.resetScroll=true; render(); toast('Turnos de ejemplo cargados'); break;
-    case 'borrarEjemplo': D.shifts=D.shifts.filter(s=>!s.demo); D.haberes=D.haberes.filter(h=>!h.demo); D.ejemplo=false; save(); UI.animate=true; render(); break;
+    case 'borrarEjemplo': D.demoIds.forEach(qDel); D.shifts=D.shifts.filter(s=>!D.demoIds.includes(s.id)); D.demoIds=[]; D.haberes=D.haberes.filter(h=>!h.demo); D.ejemplo=false; save(); UI.animate=true; render(); break;
     case 'borrar': UI.confirmBorrar=true; render(); break;
     case 'borrarNo': UI.confirmBorrar=false; render(); break;
-    case 'borrarSi': D={v:1,onboarded:false,cfg:{...CFG0,tema:D.cfg.tema},shifts:[],pres:{},haberes:[],ferOff:[],ferExtra:[],lastSeen:Date.now(),ejemplo:false}; save(); UI.confirmBorrar=false; UI.step='welcome'; UI.tab='resumen'; render(); break;
+    case 'borrarSi': { const p=D.pend; D.shifts.forEach(x=>qDel(x.id)); const nd=blank(); nd.cfg.tema=D.cfg.tema; nd.lastSeen=Date.now(); nd.pend={cfg:true,up:[],del:p.del}; D=nd; save(); } UI.confirmBorrar=false; UI.step='welcome'; UI.tab='resumen'; render(); break;
     case 'goConfig': UI.cfgDraft={...D.cfg}; UI.step='config'; render(); break;
+    case 'authModo': UI.auth.modo=ds.m; UI.auth.msg=''; UI.auth.ok=''; { const e=document.getElementById('au-e'); if(e) UI.auth.email=e.value.trim(); } render(); break;
+    case 'authGo': authGo(); break;
+    case 'newPass': newPass(); break;
+    case 'logout': logout(); break;
+    case 'retry': if(USER) startSession(USER); break;
     case 'demo': D.onboarded=true; ejemplo(); UI.step=null; UI.animate=true; render(); break;
     case 'obSet': readOb(); UI.cfgDraft[ds.k]=ds.v; if(ds.k==='afp'){ const p=AFPS.find(x=>x[0]===ds.v); UI.cfgDraft.afpPct=Math.round((10+p[1])*100)/100; } render(); break;
     case 'obDone': { readOb(); const c=UI.cfgDraft; if(!(c.valorHora>0)||!(c.horasSem>0)){ toast('Indica tu valor hora y tus horas semanales.'); break; }
@@ -796,11 +948,12 @@ document.addEventListener('change',e=>{
   if(k==='salud' && v==='fonasa') D.cfg.saludPct=7;
   save(); render();
 });
-document.addEventListener('keydown',e=>{ if(e.key==='Escape' && UI.sheet){ UI.sheet=null; renderSheet(); } });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape' && UI.sheet){ UI.sheet=null; renderSheet(); }
+  if(e.key==='Enter' && e.target && (e.target.id==='au-e'||e.target.id==='au-p')){ e.preventDefault(); authGo(); }
+  if(e.key==='Enter' && e.target && e.target.id==='np-p'){ e.preventDefault(); newPass(); } });
 
 /* ================= Arranque ================= */
-function boot(){
-  applyTheme();
+function afterLoad(){
   const now=NOW(), last=D.lastSeen||0;
   if(D.onboarded && last){
     const fer=feriadoMap();
@@ -816,12 +969,26 @@ function boot(){
       setTimeout(()=>{ UI.earned=[]; },2500);
     }
   }
-  D.lastSeen=now.getTime(); save();
-  render();
+  D.lastSeen=now.getTime(); saveLocal();
+}
+function boot(){
+  applyTheme(); render();
+  RECOVERY = /type=recovery/.test(location.hash||'');
+  if(window.supabase && supabase.createClient){
+    sb=supabase.createClient(SB_URL, SB_KEY);
+    sb.auth.onAuthStateChange((ev,session)=>{ setTimeout(()=>{
+      if(ev==='PASSWORD_RECOVERY' || (RECOVERY && session)){ RECOVERY=true; UI.auth.msg=''; UI.step='newpass'; render(); return; }
+      if(ev==='SIGNED_OUT'){ if(USER){ USER=null; KEY=null; D=blank(); UI.step='auth'; render(); } return; }
+      if(session && session.user && UI.step!=='newpass' && (!USER || USER.id!==session.user.id)) startSession(session.user);
+      else if(!session && ev==='INITIAL_SESSION'){ UI.step='auth'; render(); }
+    },0); });
+  } else { UI.step='auth'; UI.auth.msg='No se pudo conectar. Revisa tu internet y recarga la página.'; render(); }
   setInterval(()=>{ if(UI.sheet||UI.step) return; const ae=document.activeElement; if(ae && /INPUT|SELECT/.test(ae.tagName)) return;
     const n=NOW(), l=D.lastSeen; const just=D.shifts.filter(s=>{ if(s.lic) return false; const b=bounds(s)[1].getTime(); return b>l && b<=n.getTime(); });
     if(just.length){ UI.earned=just.map(s=>s.id); UI.fromG=monthData(UI.ym,new Date(l)).ganado.liq; UI.animate=true; toast('Un turno pasó a Ganado'); setTimeout(()=>{UI.earned=[];},2500); }
-    D.lastSeen=n.getTime(); save(); render(); }, 60000);
+    D.lastSeen=n.getTime(); saveLocal(); render(); }, 60000);
+  window.addEventListener('online',()=>{ if(USER) flush(); });
+  document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible'){ if(hasPend()) flush(); else refreshFromCloud(); } });
 }
 if(typeof document!=='undefined' && document.getElementById('app')) boot();
 </script>
