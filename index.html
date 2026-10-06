@@ -9,6 +9,8 @@
 <title>Sueldito</title>
 <style>:root{padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px);box-sizing:border-box}[hidden]{display:none!important}</style>
 
+
+
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
 <style>
 /* Layout: app de una pantalla; contenido con scroll, barra de pestañas abajo, hojas inferiores para editar. */
@@ -51,7 +53,7 @@ h1,h2,p{margin:0}
 .muted{color:var(--muted)}
 .shell{height:100%;max-width:480px;margin:0 auto;display:flex;flex-direction:column;position:relative;background:var(--bg)}
 main{flex:1;overflow-y:auto;padding:20px 16px 96px;display:flex;flex-direction:column;gap:14px}
-main>*{flex-shrink:0}
+main>*,.view>*,.colA>*,.colB>*{flex-shrink:0}
 .col{display:flex;flex-direction:column}.row{display:flex;align-items:center}
 .gap4{gap:4px}.gap6{gap:6px}.gap8{gap:8px}.gap10{gap:10px}.gap12{gap:12px}.gap14{gap:14px}.grow{flex:1;min-width:0}
 .between{justify-content:space-between}
@@ -148,9 +150,12 @@ nav.tabs button[aria-current="page"]{color:var(--purple);font-weight:600}
 .scrim{position:fixed;inset:0;background:rgba(10,8,20,.55);display:flex;align-items:flex-end;justify-content:center;z-index:20}
 .sheet{width:100%;max-width:480px;max-height:94%;overflow-y:auto;background:var(--bg);border-radius:22px 22px 0 0;padding:16px 16px calc(20px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:14px;animation:up .25s ease-out}
 @keyframes up{from{transform:translateY(40px);opacity:.6}to{transform:none;opacity:1}}
+.tf{display:flex;align-items:center;gap:6px}
+.tf .input{padding:0 6px;text-align:center;text-align-last:center}
 .tl{display:flex;height:26px;border-radius:8px;overflow:hidden}
 .tl span{display:block;min-width:1px}
-.tl .k-base{background:var(--seg-base)}.tl .k-n{background:var(--seg-n)}.tl .k-nd{background:var(--seg-nd)}.tl .k-d{background:var(--seg-d)}.tl .k-x{background:var(--seg-x)}
+.k-base{background:var(--seg-base)}.k-n{background:var(--seg-n)}.k-nd{background:var(--seg-nd)}.k-d{background:var(--seg-d)}.k-x{background:var(--seg-x)}
+.k-xn{background:repeating-linear-gradient(45deg,var(--seg-x) 0 5px,var(--seg-n) 5px 10px)}.k-xd{background:repeating-linear-gradient(45deg,var(--seg-x) 0 5px,var(--seg-d) 5px 10px)}.k-xnd{background:repeating-linear-gradient(45deg,var(--seg-x) 0 5px,var(--seg-nd) 5px 10px)}
 .tl .k-brk{background:repeating-linear-gradient(45deg,var(--border2) 0 3px,var(--surf) 3px 6px)}
 .lg{display:flex;align-items:center;gap:8px;justify-content:space-between;font-size:13px}
 .lg i{width:10px;height:10px;border-radius:3px;display:block;flex-shrink:0}
@@ -170,6 +175,26 @@ nav.tabs button[aria-current="page"]{color:var(--purple);font-weight:600}
 .afp{min-height:44px;padding:0 14px;display:flex;align-items:center;gap:12px;border-top:1px solid var(--surf2)}
 .afp:first-child{border-top:0}
 .afp input{width:20px;height:20px;margin:0;accent-color:var(--purple)}
+.view,.colA,.colB{display:contents}
+@media (min-width: 900px){
+  .shell[data-mode="app"]{max-width:1240px;flex-direction:row}
+  .shell[data-mode="app"] nav.tabs{order:-1;width:224px;flex-shrink:0;display:flex;flex-direction:column;gap:4px;padding:28px 14px;border-top:0;border-right:1px solid var(--border)}
+  .shell[data-mode="app"] nav.tabs::before{content:'Sueldito';font-family:var(--display);font-weight:700;font-size:22px;letter-spacing:-.4px;padding:0 12px 20px;color:var(--purple)}
+  .shell[data-mode="app"] nav.tabs button{height:48px;flex-direction:row;justify-content:flex-start;gap:12px;padding:0 12px;border-radius:12px;font-size:14px}
+  .shell[data-mode="app"] nav.tabs button[aria-current="page"]{background:var(--tint)}
+  .shell[data-mode="app"] main{padding:32px 36px 56px}
+  .view{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:20px 28px;align-items:start}
+  .view>.full{grid-column:1/-1}
+  .colA,.colB{display:flex;flex-direction:column;gap:14px;min-width:0}
+  .view.v-aj{display:block;column-count:2;column-gap:28px}
+  .v-aj>section{break-inside:avoid;margin-bottom:18px}
+  .v-aj>h1{column-span:all;margin-bottom:18px}
+  .fab{bottom:28px;right:36px}
+  .scrim{align-items:center}
+  .sheet{border-radius:22px;max-width:520px;max-height:90%;padding-bottom:20px}
+  .toast{bottom:28px}
+  .h1{font-size:26px}
+}
 @media (prefers-reduced-motion: reduce){ *{animation:none!important;transition:none!important} }
 </style>
 
@@ -464,14 +489,13 @@ function rowShift(sh, opts){
     if(sh.s===D.cfg.cierre) tags.push('Cierre');
   }
   const stTxt={G:'Ganado',A:'Agendado',C:'En curso',L:'Licencia'}[st], col=st==='G'?'c-green':(st==='L'?'muted':'c-purple');
-  const right = opts.monto && !sh.lic
-    ? `<span class="num ${col}" style="font-size:15px;font-weight:700">+${money(aporte(sh))}</span>`
-    : `<span class="num" style="font-size:15px;font-weight:700">${sh.lic?'—':fh(hrs(inf.net))}</span>`;
+  const right = sh.lic ? `<span class="num" style="font-size:15px;font-weight:700">—</span>`
+    : `<span class="num ${col}" style="font-size:15px;font-weight:700;white-space:nowrap">+${money(aporte(sh))}</span>`;
   const sub = opts.sub ? `<span class="small muted">${opts.sub}</span>` : `<span class="row gap4" style="flex-wrap:wrap">${tags.map(t=>`<span class="tag">${t}</span>`).join('')}</span>`;
   return `<button class="trow ${UI.earned.includes(sh.id)?'earned':''}" data-a="edit" data-id="${sh.id}" aria-label="Editar turno del ${labelDia(a)}">
     <span class="badge b-${st}"><b>${a.getDate()}</b><span>${DIA3[a.getDay()]}</span></span>
     <span class="col gap4 grow"><span style="font-size:15px;font-weight:600">${sh.e} → ${sh.s}</span>${sub}</span>
-    <span class="col" style="align-items:flex-end;gap:2px">${right}<span class="xs ${col}" style="font-weight:600">${stTxt}</span></span>
+    <span class="col" style="align-items:flex-end;gap:2px">${right}<span class="xs" style="font-weight:600;white-space:nowrap"><span class="muted num">${sh.lic?'':fh(hrs(inf.net))+' · '}</span><span class="${col}">${stTxt}</span></span></span>
   </button>`;
 }
 function vResumen(){
@@ -480,8 +504,8 @@ function vResumen(){
   const ult=[...all].reverse().find(s=>statusOf(s,now)==='G'), prox=all.filter(s=>statusOf(s,now)!=='G').slice(0,2);
   const lista=[...(ult?[[ult,'Último turno']]:[]), ...prox.map(s=>[s,statusOf(s,now)==='C'?'En curso ahora':'Próximo'])];
   const fromG = UI.fromG!==null ? UI.fromG : 0;
-  return `<div class="row between gap8">
-    <div class="col" style="gap:2px"><span class="small muted">Hoy · ${labelDia(now)}, ${hm(now)}</span><h1 class="h1">Mi sueldo</h1></div>${monthPill()}</div>
+  return `<div class="view"><div class="row between gap8 full">
+    <div class="col" style="gap:2px"><span class="small muted">Hoy · ${labelDia(now)}, ${hm(now)}</span><h1 class="h1">Mi sueldo</h1></div>${monthPill()}</div><div class="colA">
   ${D.ejemplo?`<div class="note"><span class="grow"><b>Datos de ejemplo.</b> Estos turnos no son tuyos: sirven para probar.</span><button class="tag c-purple" style="border:0;min-height:32px" data-a="borrarEjemplo">Quitar</button></div>`:''}
   <section class="hero">
     <div class="row between"><span class="lbl">Líquido proyectado del mes · aprox.</span><button class="info" data-a="aviso" aria-label="Por qué es aproximado">${I.info}</button></div>
@@ -501,10 +525,10 @@ function vResumen(){
     <span class="col grow" style="gap:2px"><span class="label" style="font-size:14px">Cumplo presentismo este mes</span>
     <span class="small muted">Suma ${D.cfg.presPct}% de las horas base · +${money(Math.round(md.total.base*D.cfg.presPct/100))}</span></span></label>
   <button class="btn" data-a="tab" data-t="liq">Ver detalle ${I.arrow}</button>
-  <div class="col gap8"><div class="row between"><span class="label muted">Tus turnos</span><button class="label c-purple" style="border:0;background:none;min-height:32px" data-a="tab" data-t="turnos">Ver todos</button></div>
+  </div><div class="colB"><div class="col gap8"><div class="row between"><span class="label muted">Tus turnos</span><button class="label c-purple" style="border:0;background:none;min-height:32px" data-a="tab" data-t="turnos">Ver todos</button></div>
   ${lista.length?`<div class="card" style="overflow:hidden">${lista.map(([s,sub],i)=>`<div style="${i?'border-top:1px solid var(--border)':''}">${rowShift(s,{monto:true,sub})}</div>`).join('')}</div>`
     :`<div class="card pad col gap10"><span>Aún no registras turnos. Agrega el primero para ver cuánto llevas ganado.</span><button class="btn" data-a="nuevo">${I.plus} Agregar turno</button></div>`}
-  </div>`;
+  </div></div></div>`;
 }
 function ring(g,a,tot){
   const C=2*Math.PI*16, lg=Math.min(g,tot)/tot*C, la=Math.min(a,Math.max(0,tot-g))/tot*C;
@@ -520,8 +544,8 @@ function weekStats(list, now, fer){
 function vTurnos(){
   const now=NOW(), list=shiftsOf(UI.ym), fer=feriadoMap();
   const tot=list.filter(s=>!s.lic).reduce((s,sh)=>s+shiftInfo(sh,fer).net,0);
-  let body='';
-  if(UI.vista==='lista'){
+  const wide=WIDE(); let body='', bodyCal='';
+  if(wide || UI.vista==='lista'){
     const weeks=new Map();
     list.forEach(sh=>{ const k=ymd(weekStart(bounds(sh)[0])); if(!weeks.has(k)) weeks.set(k,[]); weeks.get(k).push(sh); });
     if(!list.length) body=`<div class="card pad col gap10"><span>No hay turnos en ${MESES[Number(UI.ym.slice(5))-1].toLowerCase()}.</span><button class="btn" data-a="nuevo">${I.plus} Agregar turno</button></div>`;
@@ -534,8 +558,9 @@ function vTurnos(){
         <span class="num" style="font-size:15px;font-weight:700;white-space:nowrap">${String(sum).replace('.',',')} / ${hs} h</span></div>
         ${ws.map(sh=>`<div class="swipe" data-id="${sh.id}"><div class="under"><span class="ed">${I.edit}Editar</span><span class="del">${I.trash}Borrar</span></div>${rowShift(sh)}</div>`).join('')}</section>`;
     });
-    if(list.length) body+=`<span class="small muted" style="text-align:center">Desliza a la derecha para editar y a la izquierda para borrar.</span>`;
-  } else {
+    if(list.length) body+=`<span class="small muted" style="text-align:center">${wide?'Haz clic en un turno para editarlo o borrarlo.':'Desliza a la derecha para editar y a la izquierda para borrar.'}</span>`;
+  }
+  if(wide || UI.vista!=='lista'){
     const [y,m]=UI.ym.split('-').map(Number), first=new Date(y,m-1,1), off=(first.getDay()+6)%7, days=new Date(y,m,0).getDate(), cells=[];
     const byDay={}; list.forEach(sh=>{ byDay[sh.f]=sh; });
     for(let i=0;i<Math.ceil((off+days)/7)*7;i++){
@@ -545,7 +570,7 @@ function vTurnos(){
       cells.push(`<button class="${cls}" ${inM?`data-a="dia" data-f="${f}"`:'disabled'} aria-label="${d.getDate()} de ${MESES[d.getMonth()].toLowerCase()}, ${st}${fer.has(f)?', feriado':''}">${d.getDate()}<i></i></button>`);
     }
     const sel=UI.selDay&&UI.selDay.slice(0,7)===UI.ym?UI.selDay:null, sd=sel?dt(sel):null, ssh=sel?byDay[sel]:null, fh_=sel?fer.get(sel):null;
-    body=`<div class="card col gap6" style="padding:12px 10px">
+    bodyCal=`<div class="card col gap6" style="padding:12px 10px">
       <div class="cal xs muted" style="text-align:center;font-weight:600"><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span></div>
       <div class="cal">${cells.join('')}</div>
       <div class="row gap12 xs muted" style="justify-content:center;flex-wrap:wrap;padding-top:4px">
@@ -557,27 +582,27 @@ function vTurnos(){
       ${ssh?`<div class="card" style="overflow:hidden">${rowShift(ssh,{monto:true})}</div>`:`<button class="btn ghost" data-a="nuevo" data-f="${sel}">${I.plus} Agregar turno este día</button>`}</div>`
       :`<span class="small muted" style="text-align:center">Toca un día para ver su turno o agregar uno.</span>`}`;
   }
-  return `<div class="row between gap8"><h1 class="h1">Turnos</h1>${monthPill()}</div>
-  <div class="row between small muted"><span>${list.filter(s=>!s.lic).length} turnos · ${fh(hrs(tot))}</span></div>
-  <div class="seg c2"><button data-a="vista" data-v="lista" aria-pressed="${UI.vista==='lista'}">${I.list}Lista</button><button data-a="vista" data-v="cal" aria-pressed="${UI.vista==='cal'}">Calendario</button></div>
-  ${body}`;
+  return `<div class="view"><div class="row between gap8 full"><h1 class="h1">Turnos</h1>${monthPill()}</div>
+  <div class="row between small muted full"><span>${list.filter(s=>!s.lic).length} turnos · ${fh(hrs(tot))}</span></div>
+  ${wide?'':`<div class="seg c2"><button data-a="vista" data-v="lista" aria-pressed="${UI.vista==='lista'}">${I.list}Lista</button><button data-a="vista" data-v="cal" aria-pressed="${UI.vista==='cal'}">Calendario</button></div>`}
+  <div class="colA">${wide||UI.vista==='lista'?body:bodyCal}</div>${wide?`<div class="colB">${bodyCal}</div>`:''}</div>`;
 }
 function vLiq(){
   const md=monthData(UI.ym), c=D.cfg, P=UI.modo==='G'?md.ganado:md.total, pres=presOf(UI.ym);
   const r=(l,s,v)=>`<div class="liq-r"><span class="col"><span>${l}</span>${s?`<span class="xs muted">${s}</span>`:''}</span><span class="v">${money(v)}</span></div>`;
-  return `<div class="row between gap8"><div class="col" style="gap:2px"><h1 class="h1">Liquidación estimada</h1><span class="small muted">Calculada al ${labelDia(NOW())}, ${hm(NOW())}</span></div></div>
-  <div class="row between">${monthPill()}</div>
+  return `<div class="view"><div class="row between gap8 full"><div class="col" style="gap:2px"><h1 class="h1">Liquidación estimada</h1><span class="small muted">Calculada al ${labelDia(NOW())}, ${hm(NOW())}</span></div></div>
+  <div class="colA"><div class="row between">${monthPill()}</div>
   <div class="seg c2" role="group" aria-label="Qué incluir"><button data-a="modo" data-m="G" aria-pressed="${UI.modo==='G'}">Solo ganado</button><button data-a="modo" data-m="T" aria-pressed="${UI.modo==='T'}">Ganado + agendado</button></div>
   <label class="card check green" style="padding:10px 14px"><input type="checkbox" id="pres-liq" data-a="pres" ${pres?'checked':''}><span class="label" style="font-size:14px">Incluir bono presentismo (${c.presPct}% horas base)</span></label>
   <div class="note">${I.info}<span><b>Esto es una aproximación.</b> Unos minutos de diferencia en tu entrada, salida o break, o ajustes de tu empleador, pueden cambiar el monto final. Tu liquidación oficial es la que vale.</span></div>
-  <div class="card" style="overflow:hidden">
+  </div><div class="colB"><div class="card" style="overflow:hidden">
     <div class="pad small" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 12px;border-bottom:1px solid var(--surf2)">
       <div class="col"><span class="muted">Valor hora</span><b>${money(c.valorHora)}</b></div><div class="col"><span class="muted">Horas trabajadas</span><b>${fh(P.hTot)}</b></div>
       <div class="col"><span class="muted">Previsión</span><b>AFP ${esc(c.afp)} (${String(c.afpPct).replace('.',',')}%)</b></div><div class="col"><span class="muted">Salud</span><b>${c.salud==='fonasa'?'Fonasa':'Isapre'} (${String(c.saludPct).replace('.',',')}%)</b></div>
       <div class="col"><span class="muted">Contrato</span><b>${c.contrato==='indefinido'?'Indefinido':'Plazo fijo'}</b></div><div class="col"><span class="muted">Turnos incluidos</span><b>${UI.modo==='G'?md.nG+' ganados':md.n+' en total'}</b></div></div>
     <div class="liq-h"><span>Haberes imponibles</span><span class="num">${money(P.imp)}</span></div>
     ${r('Sueldo base',fh(P.hBase)+' × '+money(c.valorHora),P.base)}
-    ${P.extra?r('Horas extra',fh(P.hExtra)+' × '+money(c.valorHora)+' + '+c.rExtra+'%',P.extra):''}
+    ${P.extra?r('Horas extra',fh(P.hExtra)+' × '+money(c.valorHora)+' + '+c.rExtra+'%'+(c.extraSuma?' · si son de noche o domingo, su recargo se suma en las líneas de abajo':''),P.extra):''}
     ${r('Adicional nocturno',fh(P.hNoct)+' × '+c.rNoct+'%',P.noct)}
     ${r('Horas domingo / festivo',fh(P.hDom)+' × '+c.rDom+'%',P.dom)}
     ${r('Adicional nocturno domingo',fh(P.hNoctDom)+' × '+c.rNoctDom+'%',P.noctDom)}
@@ -592,7 +617,7 @@ function vLiq(){
     <div class="liq-tot"><span class="muted">Total haberes</span><span class="num">${money(P.totHab)}</span><span class="muted">Total descuentos</span><span class="num">${money(P.desc)}</span>
       <span class="muted">Base tributable</span><span class="num">${money(P.trib)}</span><span class="muted">Impuesto único</span><span>No calculado en esta versión</span></div>
     <div class="liq-fin"><span class="label" style="font-size:14px">Líquido a recibir</span><span class="num" style="font-size:24px;font-weight:600">${money(P.liq)}</span></div>
-  </div>`;
+  </div></div></div>`;
 }
 function vAjustes(){
   const c=D.cfg;
@@ -600,7 +625,7 @@ function vAjustes(){
   const t=(l,k)=>`<label class="set-r"><span>${l}</span><input type="time" id="cfg-${k}" data-cfg="${k}" value="${c[k]}"></label>`;
   const chk=(l,k)=>`<label class="set-r"><span>${l}</span><input type="checkbox" id="cfg-${k}" data-cfg="${k}" ${c[k]?'checked':''} style="width:22px;height:22px;accent-color:var(--purple)"></label>`;
   const year=UI.ym.slice(0,4), fer=FERIADOS.filter(f=>f[0].startsWith(year));
-  return `<h1 class="h1">Ajustes</h1>
+  return `<div class="view v-aj"><h1 class="h1 full">Ajustes</h1>
   <section class="col gap6"><span class="set-t">Mi cuenta</span><div class="card">
     <div class="set-r"><span class="col" style="min-width:0"><span style="overflow-wrap:anywhere">${USER?esc(USER.email||''):'Sin sesión'}</span><span class="xs muted" id="sync-st">${syncText()}</span></span></div>
     <button class="set-r c-purple" style="width:100%;border-left:0;border-right:0;border-bottom:0;background:none;font-weight:600" data-a="logout"><span>Cerrar sesión</span>${I.arrow}</button></div></section>
@@ -640,7 +665,7 @@ function vAjustes(){
     <span class="small muted">Tus turnos y tu configuración se guardan en tu cuenta. El dinero no se guarda: se calcula en tu teléfono.</span>
     <button class="btn ghost" data-a="ejemplo">Cargar turnos de ejemplo en este mes</button>
     ${UI.confirmBorrar?`<div class="grid2"><button class="btn ghost" data-a="borrarNo">Cancelar</button><button class="btn danger" data-a="borrarSi">Sí, borrar todo</button></div>`:`<button class="btn danger" data-a="borrar">Borrar todos mis datos</button>`}</div></section>
-  <section class="col gap6"><span class="set-t">Sobre Sueldito</span><div class="card pad small" style="line-height:1.5">Sueldito es una referencia para ordenar tus finanzas: te muestra cuánto llevas ganado y cuánto viene según los turnos que registras. Los montos son aproximados. Minutos de diferencia en tus marcas de entrada, salida o break, y ajustes de tu empleador, pueden cambiar el resultado. Tu liquidación oficial es la que vale.</div></section>`;
+  <section class="col gap6"><span class="set-t">Sobre Sueldito</span><div class="card pad small" style="line-height:1.5">Sueldito es una referencia para ordenar tus finanzas: te muestra cuánto llevas ganado y cuánto viene según los turnos que registras. Los montos son aproximados. Minutos de diferencia en tus marcas de entrada, salida o break, y ajustes de tu empleador, pueden cambiar el resultado. Tu liquidación oficial es la que vale.</div></section></div>`;
 }
 function vLoading(){ return `<main style="justify-content:center;align-items:center"><span class="label c-purple" style="letter-spacing:.6px">SUELDITO</span><span class="muted">Cargando tus datos…</span></main>`; }
 function vError(){ return `<main style="justify-content:center;gap:16px"><h1 class="h1">No pudimos cargar tus datos</h1><p class="muted">Necesitas conexión a internet la primera vez que entras en este dispositivo.</p><button class="btn" data-a="retry">Reintentar</button><button class="btn ghost" data-a="logout">Cerrar sesión</button></main>`; }
@@ -701,22 +726,41 @@ function vConfig(){
 }
 
 /* ================= Hoja: turno ================= */
+const WIDE = () => !!(window.matchMedia && matchMedia('(min-width: 900px)').matches);
+const HORAS = Array.from({length:24},(_,i)=>pad(i));
+function tf(k,opt){
+  const v=UI.sheet.d[k]||'', h=v?v.slice(0,2):'', m=v?v.slice(3,5):'00';
+  const custom=(UI.sheet.cm&&UI.sheet.cm[k]) || (v && m!=='00' && m!=='30');
+  return `<div class="tf"><select class="input num" id="sf-${k}-h" data-th="${k}" aria-label="Hora">${(opt||!v)?`<option value="" ${h===''?'selected':''}>--</option>`:''}${HORAS.map(x=>`<option ${x===h?'selected':''}>${x}</option>`).join('')}</select>
+    <span class="num" style="font-weight:700">:</span>
+    ${custom?`<input class="input num" type="number" inputmode="numeric" min="0" max="59" id="sf-${k}-m" data-tm="${k}" value="${m}" aria-label="Minutos">`
+      :`<select class="input num" id="sf-${k}-m" data-tm="${k}" aria-label="Minutos"><option ${m==='00'?'selected':''}>00</option><option ${m==='30'?'selected':''}>30</option><option value="otro">Otro…</option></select>`}</div>`;
+}
+function onTime(el){
+  const k=el.dataset.th||el.dataset.tm, d=UI.sheet.d; UI.sheet.cm=UI.sheet.cm||{};
+  const hs=document.getElementById('sf-'+k+'-h'), ms=document.getElementById('sf-'+k+'-m'); if(!hs||!ms) return;
+  const h=hs.value;
+  if(ms.tagName==='SELECT' && ms.value==='otro'){ UI.sheet.cm[k]=true; d[k]=h===''?'':h+':00'; renderSheet();
+    const n=document.getElementById('sf-'+k+'-m'); if(n){ n.focus(); if(n.select) n.select(); } return; }
+  if(h===''){ d[k]=''; } else { let m=parseInt(ms.value,10); if(!(m>=0)) m=0; if(m>59) m=59; d[k]=h+':'+pad(m); }
+  previewShift();
+}
 function sheetShift(){
   const d=UI.sheet.d, nuevo=!UI.sheet.edit;
   return `<div class="scrim" data-a="closeScrim"><div class="sheet" role="dialog" aria-modal="true" aria-label="${nuevo?'Nuevo turno':'Editar turno'}">
     <div class="row between"><h2 style="font-size:18px">${nuevo?'Nuevo turno':'Editar turno'}</h2><button class="icon-btn" style="width:44px;height:44px" data-a="close" aria-label="Cerrar">${I.x}</button></div>
     <div class="field"><label class="label" for="sf-f">Fecha de inicio del turno</label><input class="input" type="date" id="sf-f" data-f="f" value="${d.f}"></div>
-    <div class="grid2"><div class="field"><label class="label" for="sf-e">Entrada</label><input class="input num" type="time" id="sf-e" data-f="e" value="${d.e}"></div>
-      <div class="field"><label class="label" for="sf-s">Salida <span id="sf-next" class="c-purple" style="font-weight:500"></span></label><input class="input num" type="time" id="sf-s" data-f="s" value="${d.s}"></div></div>
+    <div class="grid2"><div class="field"><label class="label" for="sf-e-h">Entrada</label>${tf('e',false)}</div>
+      <div class="field"><label class="label" for="sf-s-h">Salida <span id="sf-next" class="c-purple" style="font-weight:500"></span></label>${tf('s',false)}</div></div>
     <div class="col gap6" id="sf-brk" ${d.sinBreak?'hidden':''}><div class="grid2">
-      <div class="field"><label class="label" for="sf-bi">Ida a break <span class="muted" style="font-weight:400">(opcional)</span></label><input class="input opt num" type="time" id="sf-bi" data-f="bi" value="${d.bi}"></div>
-      <div class="field"><label class="label" for="sf-bv">Vuelta <span class="muted" style="font-weight:400">(opcional)</span></label><input class="input opt num" type="time" id="sf-bv" data-f="bv" value="${d.bv}"></div></div>
+      <div class="field"><label class="label" for="sf-bi-h">Ida a break <span class="muted" style="font-weight:400">(opcional)</span></label>${tf('bi',true)}</div>
+      <div class="field"><label class="label" for="sf-bv-h">Vuelta <span class="muted" style="font-weight:400">(opcional)</span></label>${tf('bv',true)}</div></div>
       <span class="small muted">Vacío = ${D.cfg.breakMin} min estimados a mitad del turno. En cierres (salida ${D.cfg.cierre}) el break termina antes de las 00:00.</span></div>
     <label class="check"><input type="checkbox" id="sf-sb" data-f="sinBreak" ${d.sinBreak?'checked':''}><span>Este turno no tuvo break</span></label>
     <div class="field"><span class="label">Hora extra</span><div class="seg c3" role="group" aria-label="Hora extra">
       ${[['no','No'],['todo','Todo el turno'],['parte','Una parte']].map(([v,l])=>`<button data-a="sfExtra" data-v="${v}" aria-pressed="${d.extra===v}">${l}</button>`).join('')}</div>
-      <div class="grid2" id="sf-x" ${d.extra==='parte'?'':'hidden'}><div class="field"><label class="label" for="sf-xd">Extra desde</label><input class="input num" type="time" id="sf-xd" data-f="xd" value="${d.xd}"></div>
-      <div class="field"><label class="label" for="sf-xh">Extra hasta</label><input class="input num" type="time" id="sf-xh" data-f="xh" value="${d.xh}"></div></div></div>
+      <div class="grid2" id="sf-x" ${d.extra==='parte'?'':'hidden'}><div class="field"><label class="label" for="sf-xd-h">Extra desde</label>${tf('xd',true)}</div>
+      <div class="field"><label class="label" for="sf-xh-h">Extra hasta</label>${tf('xh',true)}</div></div></div>
     <label class="check"><input type="checkbox" id="sf-lic" data-f="lic" ${d.lic?'checked':''}><span>Tuve licencia este día (no se paga)</span></label>
     <div id="sf-prev"></div>
     <button class="btn" id="sf-save" data-a="sfSave" style="height:52px">Guardar turno</button>
@@ -731,12 +775,12 @@ function previewShift(){
   let h=v.err.map(e=>`<div class="note err">${I.info}<span>${esc(e)}</span></div>`).join('')+v.warn.map(e=>`<div class="note warn">${I.info}<span>${esc(e)}</span></div>`).join('');
   if(!v.err.length && d.lic) h+=`<div class="note">${I.info}<span>Queda registrado como licencia. No suma horas ni dinero; el subsidio de la licencia lo paga tu sistema de salud aparte.</span></div>`;
   if(!v.err.length && !d.lic){
-    const fer=feriadoMap(), ks=minuteKinds(d,fer), segs=[]; const cat=k=>k.brk?'brk':(k.extra?'x':(k.dom&&k.night?'nd':(k.dom?'d':(k.night?'n':'base'))));
+    const fer=feriadoMap(), ks=minuteKinds(d,fer), segs=[]; const rc=k=>k.dom&&k.night?'nd':(k.dom?'d':(k.night?'n':'')); const cat=k=>k.brk?'brk':(k.extra?'x'+(D.cfg.extraSuma?rc(k):''):(rc(k)||'base'));
     ks.forEach(k=>{ const c=cat(k); if(segs.length&&segs[segs.length-1].c===c) segs[segs.length-1].n++; else segs.push({c,n:1}); });
     const cnt={}; ks.forEach(k=>{ const c=cat(k); cnt[c]=(cnt[c]||0)+1; });
     const br=breakRange(d), [a,b]=bounds(d), c=D.cfg;
-    const lg=[['base','Hora normal',''],['n','Nocturno','+'+c.rNoct+'%'],['d','Domingo o festivo','+'+c.rDom+'%'],['nd','Domingo o festivo de noche','+'+c.rDom+'% +'+c.rNoctDom+'%'],['x','Hora extra','+'+c.rExtra+'%']]
-      .filter(x=>cnt[x[0]]).map(([k,l,p])=>`<div class="lg"><span class="row gap8"><i class="k-${k}" style="background:var(--seg-${k})"></i>${l} <span class="muted">${p}</span></span><span class="num">${fh(hrs(cnt[k]))}</span></div>`).join('');
+    const lg=[['base','Hora normal',''],['n','Nocturno','+'+c.rNoct+'%'],['d','Domingo o festivo','+'+c.rDom+'%'],['nd','Domingo o festivo de noche','+'+c.rDom+'% +'+c.rNoctDom+'%'],['x','Hora extra','+'+c.rExtra+'%'],['xn','Hora extra nocturna','+'+c.rExtra+'% +'+c.rNoct+'%'],['xd','Hora extra en domingo o festivo','+'+c.rExtra+'% +'+c.rDom+'%'],['xnd','Hora extra en domingo o festivo de noche','+'+c.rExtra+'% +'+c.rDom+'% +'+c.rNoctDom+'%']]
+      .filter(x=>cnt[x[0]]).map(([k,l,p])=>`<div class="lg"><span class="row gap8"><i class="k-${k}"></i>${l} <span class="muted">${p}</span></span><span class="num">${fh(hrs(cnt[k]))}</span></div>`).join('');
     const ym=d.f.slice(0,7), con=monthData(ym,null,{sin:d.id,mas:d}).total.liq, sin=monthData(ym,null,{sin:d.id}).total.liq;
     h+=`<div class="card pad col gap10"><div class="row between"><span class="label">Así se pagará</span><span class="small muted">${fh(hrs(ks.filter(k=>!k.brk).length))} netas</span></div>
       <div class="tl" aria-hidden="true">${segs.map(s=>`<span class="k-${s.c}" style="width:${s.n/ks.length*100}%"></span>`).join('')}</div>
@@ -760,6 +804,7 @@ function sheetAviso(){
 function applyTheme(){ const r=document.documentElement; if(D.cfg.tema==='auto'){ if(r.dataset.themeBy==='app'){ delete r.dataset.theme; delete r.dataset.themeBy; } } else { r.dataset.theme=D.cfg.tema; r.dataset.themeBy='app'; } }
 function render(){
   const app=document.getElementById('app'), sc=app.querySelector('main') ? app.querySelector('main').scrollTop : 0;
+  app.dataset.mode = UI.step ? 'single' : 'app';
   if(UI.step==='loading'){ app.innerHTML=vLoading(); }
   else if(UI.step==='auth'){ app.innerHTML=vAuth(); }
   else if(UI.step==='newpass'){ app.innerHTML=vNewPass(); }
@@ -823,9 +868,9 @@ function bindSwipes(){
 /* ================= Acciones ================= */
 function openNew(f){
   const base=f||(UI.ym===ymOf(NOW())?ymd(NOW()):UI.ym+'-01');
-  UI.sheet={type:'shift',edit:false,d:{id:uid(),f:base,e:'',s:'',bi:'',bv:'',sinBreak:false,extra:'no',xd:'',xh:'',lic:false}}; renderSheet();
+  UI.sheet={type:'shift',edit:false,cm:{},d:{id:uid(),f:base,e:'',s:'',bi:'',bv:'',sinBreak:false,extra:'no',xd:'',xh:'',lic:false}}; renderSheet();
 }
-function openEdit(id){ const s=D.shifts.find(x=>x.id===id); if(!s) return; UI.sheet={type:'shift',edit:true,d:{...s}}; renderSheet(); }
+function openEdit(id){ const s=D.shifts.find(x=>x.id===id); if(!s) return; UI.sheet={type:'shift',edit:true,cm:{},d:{...s}}; renderSheet(); }
 let lastDeleted=null;
 function delShift(id){ const i=D.shifts.findIndex(x=>x.id===id); if(i<0) return; lastDeleted=D.shifts[i]; D.shifts.splice(i,1); qDel(id); D.demoIds=D.demoIds.filter(x=>x!==id); save(); UI.sheet=null; render(); toast('Turno borrado',true); }
 function ejemplo(){
@@ -934,6 +979,7 @@ document.addEventListener('click',e=>{
 });
 document.addEventListener('input',e=>{
   const el=e.target;
+  if((el.dataset.th||el.dataset.tm) && UI.sheet && UI.sheet.type==='shift'){ onTime(el); return; }
   if(el.dataset.f && UI.sheet && UI.sheet.type==='shift'){
     UI.sheet.d[el.dataset.f] = el.type==='checkbox' ? el.checked : el.value;
     if(el.dataset.f==='sinBreak'){ document.getElementById('sf-brk').hidden=el.checked; }
@@ -941,7 +987,9 @@ document.addEventListener('input',e=>{
   }
 });
 document.addEventListener('change',e=>{
-  const el=e.target, k=el.dataset.cfg; if(!k) return;
+  const el=e.target, k=el.dataset.cfg;
+  if((el.dataset.th||el.dataset.tm) && el.tagName==='SELECT' && UI.sheet && UI.sheet.type==='shift'){ onTime(el); return; }
+  if(!k) return;
   let v = el.type==='checkbox' ? el.checked : (el.type==='number' ? Number(el.value) : el.value);
   if(el.type==='number' && !(v>=0)) v=CFG0[k];
   if(el.type==='time' && !v) v=CFG0[k];
@@ -989,6 +1037,7 @@ function boot(){
     const n=NOW(), l=D.lastSeen; const just=D.shifts.filter(s=>{ if(s.lic) return false; const b=bounds(s)[1].getTime(); return b>l && b<=n.getTime(); });
     if(just.length){ UI.earned=just.map(s=>s.id); UI.fromG=monthData(UI.ym,new Date(l)).ganado.liq; UI.animate=true; toast('Un turno pasó a Ganado'); setTimeout(()=>{UI.earned=[];},2500); }
     D.lastSeen=n.getTime(); saveLocal(); render(); }, 60000);
+  if(window.matchMedia){ const mq=matchMedia('(min-width: 900px)'), f=()=>{ if(!UI.sheet) render(); }; if(mq.addEventListener) mq.addEventListener('change',f); else if(mq.addListener) mq.addListener(f); }
   window.addEventListener('online',()=>{ if(USER) flush(); });
   document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible'){ if(hasPend()) flush(); else refreshFromCloud(); } });
 }
