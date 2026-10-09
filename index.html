@@ -11,6 +11,7 @@
 
 
 
+
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
 <style>
 /* Layout: app de una pantalla; contenido con scroll, barra de pestañas abajo, hojas inferiores para editar. */
@@ -175,6 +176,19 @@ nav.tabs button[aria-current="page"]{color:var(--purple);font-weight:600}
 .afp{min-height:44px;padding:0 14px;display:flex;align-items:center;gap:12px;border-top:1px solid var(--surf2)}
 .afp:first-child{border-top:0}
 .afp input{width:20px;height:20px;margin:0;accent-color:var(--purple)}
+.beta{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.6px;padding:2px 8px;border-radius:999px;background:var(--warn-tint);color:var(--warn);vertical-align:middle;line-height:1.5}
+.cmp-head{display:grid;grid-template-columns:minmax(0,1fr) 116px minmax(0,1fr);font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;padding-bottom:6px}
+.cmp{position:relative;display:flex;flex-direction:column}
+.cmp::before{content:'';position:absolute;top:0;bottom:0;left:50%;width:2px;margin-left:-1px;background:var(--border2)}
+.cmp-r{position:relative;display:grid;grid-template-columns:minmax(0,1fr) 116px minmax(0,1fr);align-items:center;padding:8px 0;border-top:1px solid var(--surf2)}
+.cmp-r .lb{grid-column:1/-1;justify-self:center;text-align:center;font-size:12px;color:var(--muted);margin-bottom:4px;position:relative;z-index:1;background:var(--surf);padding:0 8px;border-radius:6px}
+.cmp-r .e{text-align:right;padding-right:10px;font-size:14px;font-weight:600;white-space:nowrap}
+.cmp-r .r{text-align:left;padding-left:10px;font-size:14px;font-weight:600;white-space:nowrap}
+.cmp-r.tot .lb{font-weight:700;color:var(--ink)}.cmp-r.tot .e,.cmp-r.tot .r{font-size:16px;font-weight:700}
+.d{justify-self:center;text-align:center;border-radius:10px;padding:4px 8px;font-family:var(--display);font-size:13px;font-weight:700;position:relative;z-index:1;min-width:84px;font-variant-numeric:tabular-nums;line-height:1.25}
+.d small{display:block;font-family:var(--body);font-size:11px;font-weight:600;opacity:.9}
+.d.up{color:var(--green);background:var(--green-tint)}.d.down{color:var(--danger);background:var(--danger-tint)}.d.eq{color:var(--muted);background:var(--surf2)}
+label.btn{cursor:pointer}
 .view,.colA,.colB{display:contents}
 @media (min-width: 900px){
   .shell[data-mode="app"]{max-width:1240px;flex-direction:row}
@@ -238,7 +252,7 @@ const SB_URL = 'https://ffmpdtozmarlmnauiuvf.supabase.co';
 const SB_KEY = 'sb_publishable_LxBezHj77R3yeCDHgu4otg_YxGdMWCR';
 const LEGACY_KEY = 'sueldito.v1';
 let sb = null, USER = null, KEY = null, mem = null, RECOVERY = false;
-const blank = () => ({ v:2, onboarded:false, cfg:{...CFG0}, shifts:[], pres:{}, haberes:[], ferOff:[], ferExtra:[], demoIds:[], lastSeen:0, ejemplo:false, pend:{cfg:false,up:[],del:[]} });
+const blank = () => ({ v:2, onboarded:false, cfg:{...CFG0}, shifts:[], pres:{}, haberes:[], ferOff:[], ferExtra:[], demoIds:[], lastSeen:0, ejemplo:false, reales:{}, pend:{cfg:false,up:[],del:[]} });
 function fix(d){ const b=blank(); d={...b,...d}; d.cfg={...CFG0,...d.cfg}; d.pend={...b.pend,...(d.pend||{})}; return d; }
 function lsGet(k){ try{ const t=localStorage.getItem(k); if(t) return JSON.parse(t); }catch(e){} return null; }
 function saveLocal(){ mem=D; if(!KEY) return; try{ localStorage.setItem(KEY, JSON.stringify(D)); }catch(e){} }
@@ -253,7 +267,7 @@ const toRow = s => ({ id:s.id, user_id:USER.id, fecha:s.f, entrada:s.e, salida:s
   extra:s.extra||'no', extra_desde:s.xd||null, extra_hasta:s.xh||null, licencia:!!s.lic, updated_at:new Date().toISOString() });
 const fromRow = r => ({ id:r.id, f:r.fecha, e:t5(r.entrada), s:t5(r.salida), bi:t5(r.break_ida), bv:t5(r.break_vuelta), sinBreak:!!r.sin_break,
   extra:r.extra||'no', xd:t5(r.extra_desde), xh:t5(r.extra_hasta), lic:!!r.licencia });
-const cfgPayload = () => ({ onboarded:D.onboarded, cfg:D.cfg, pres:D.pres, haberes:D.haberes, ferOff:D.ferOff, ferExtra:D.ferExtra, demoIds:D.demoIds, ejemplo:D.ejemplo });
+const cfgPayload = () => ({ onboarded:D.onboarded, cfg:D.cfg, pres:D.pres, haberes:D.haberes, ferOff:D.ferOff, ferExtra:D.ferExtra, demoIds:D.demoIds, ejemplo:D.ejemplo, reales:D.reales });
 let flushT=null, flushing=false, SYNC='ok';
 function setSync(v){ SYNC=v; const el=document.getElementById('sync-st'); if(el) el.textContent=syncText(); }
 const syncText = () => SYNC==='ok' ? 'Todo guardado en la nube' : (SYNC==='subiendo' ? 'Guardando…' : 'Cambios pendientes: se guardarán al recuperar conexión');
@@ -453,7 +467,7 @@ function validate(sh){
 const labelDia = d => DIA3[d.getDay()].toLowerCase()+' '+d.getDate()+' '+MES3[d.getMonth()];
 
 /* ================= Estado de interfaz ================= */
-const UI = { tab:'resumen', ym:ymOf(new Date()), vista:'lista', selDay:null, modo:'G', step:'loading', auth:{modo:'login',msg:'',ok:'',busy:false,email:''},
+const UI = { tab:'resumen', ym:ymOf(new Date()), vista:'lista', selDay:null, modo:'G', step:'loading', auth:{modo:'login',msg:'',ok:'',busy:false,email:''}, cmp:null, cmpBusy:false, cmpErr:'', cmpDelConf:false,
   sheet:null, animate:true, earned:[], fromG:null, toast:null, cfgDraft:null, habForm:false, confirmBorrar:false, verFer:false };
 
 /* ================= Iconos ================= */
@@ -617,7 +631,7 @@ function vLiq(){
     <div class="liq-tot"><span class="muted">Total haberes</span><span class="num">${money(P.totHab)}</span><span class="muted">Total descuentos</span><span class="num">${money(P.desc)}</span>
       <span class="muted">Base tributable</span><span class="num">${money(P.trib)}</span><span class="muted">Impuesto único</span><span>No calculado en esta versión</span></div>
     <div class="liq-fin"><span class="label" style="font-size:14px">Líquido a recibir</span><span class="num" style="font-size:24px;font-weight:600">${money(P.liq)}</span></div>
-  </div></div></div>`;
+  </div>${cmpCard()}</div></div>`;
 }
 function vAjustes(){
   const c=D.cfg;
@@ -812,7 +826,7 @@ function render(){
   else if(UI.step==='welcome'){ app.innerHTML=vWelcome(); }
   else if(UI.step==='config'){ app.innerHTML=vConfig(); }
   else {
-    const body={resumen:vResumen,turnos:vTurnos,liq:vLiq,ajustes:vAjustes}[UI.tab]();
+    const body=(UI.tab==='liq' && UI.cmp) ? (UI.cmp.step==='review'?vReview():vCmp()) : {resumen:vResumen,turnos:vTurnos,liq:vLiq,ajustes:vAjustes}[UI.tab]();
     const tabs=[['resumen','Resumen',I.pulse],['turnos','Turnos',I.cal],['liq','Liquidación',I.doc],['ajustes','Ajustes',I.gear]];
     app.innerHTML=`<main id="main">${body}</main>${UI.tab==='turnos'?`<button class="fab" data-a="nuevo">${I.plus}Agregar turno</button>`:''}
       <nav class="tabs" aria-label="Secciones">${tabs.map(([k,l,ic])=>`<button data-a="tab" data-t="${k}" ${UI.tab===k?'aria-current="page"':''}>${ic}${l}</button>`).join('')}</nav>`;
@@ -924,9 +938,10 @@ async function logout(){
 }
 function act(a, el, ev){
   const ds=el.dataset;
+  if(cmpAct(a, ds)) return;
   switch(a){
-    case 'tab': UI.tab=ds.t; UI.animate=ds.t==='resumen'; UI.resetScroll=true; UI.confirmBorrar=false; render(); break;
-    case 'mes': { let [y,m]=UI.ym.split('-').map(Number); m+=Number(ds.d); if(m<1){m=12;y--;} if(m>12){m=1;y++;} UI.ym=y+'-'+pad(m); UI.animate=UI.tab==='resumen'; UI.selDay=null; render(); break; }
+    case 'tab': UI.cmp=null; UI.cmpErr=''; UI.tab=ds.t; UI.animate=ds.t==='resumen'; UI.resetScroll=true; UI.confirmBorrar=false; render(); break;
+    case 'mes': { UI.cmp=null; UI.cmpErr=''; let [y,m]=UI.ym.split('-').map(Number); m+=Number(ds.d); if(m<1){m=12;y--;} if(m>12){m=1;y++;} UI.ym=y+'-'+pad(m); UI.animate=UI.tab==='resumen'; UI.selDay=null; render(); break; }
     case 'vista': UI.vista=ds.v; render(); break;
     case 'dia': UI.selDay=ds.f; render(); break;
     case 'modo': UI.modo=ds.m; render(); break;
@@ -979,6 +994,7 @@ document.addEventListener('click',e=>{
 });
 document.addEventListener('input',e=>{
   const el=e.target;
+  if((el.dataset.rv||el.dataset.rvo) && UI.cmp){ rvRead(el); return; }
   if((el.dataset.th||el.dataset.tm) && UI.sheet && UI.sheet.type==='shift'){ onTime(el); return; }
   if(el.dataset.f && UI.sheet && UI.sheet.type==='shift'){
     UI.sheet.d[el.dataset.f] = el.type==='checkbox' ? el.checked : el.value;
@@ -988,6 +1004,8 @@ document.addEventListener('input',e=>{
 });
 document.addEventListener('change',e=>{
   const el=e.target, k=el.dataset.cfg;
+  if(el.id==='pdf-in'){ const f=el.files&&el.files[0]; el.value=''; handlePdf(f); return; }
+  if(el.dataset.rvo && el.type==='checkbox' && UI.cmp){ rvRead(el); return; }
   if((el.dataset.th||el.dataset.tm) && el.tagName==='SELECT' && UI.sheet && UI.sheet.type==='shift'){ onTime(el); return; }
   if(!k) return;
   let v = el.type==='checkbox' ? el.checked : (el.type==='number' ? Number(el.value) : el.value);
@@ -1001,6 +1019,267 @@ document.addEventListener('change',e=>{
 document.addEventListener('keydown',e=>{ if(e.key==='Escape' && UI.sheet){ UI.sheet=null; renderSheet(); }
   if(e.key==='Enter' && e.target && (e.target.id==='au-e'||e.target.id==='au-p')){ e.preventDefault(); authGo(); }
   if(e.key==='Enter' && e.target && e.target.id==='np-p'){ e.preventDefault(); newPass(); } });
+
+/* ================= Comparar con liquidación real (beta) ================= */
+const PDFJS='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
+let pdfjsP=null;
+function loadPdfjs(){
+  if(window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+  if(pdfjsP) return pdfjsP;
+  pdfjsP=new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=PDFJS+'pdf.min.js';
+    s.onload=()=>{ if(window.pdfjsLib){ pdfjsLib.GlobalWorkerOptions.workerSrc=PDFJS+'pdf.worker.min.js'; res(pdfjsLib); } else { pdfjsP=null; rej(new Error('lector')); } };
+    s.onerror=()=>{ pdfjsP=null; rej(new Error('lector')); }; document.head.appendChild(s); });
+  return pdfjsP;
+}
+async function pdfText(file){
+  const lib=await loadPdfjs(), buf=await file.arrayBuffer();
+  const doc=await lib.getDocument({data:buf}).promise, lines=[];
+  for(let p=1;p<=Math.min(doc.numPages,3);p++){
+    const tc=await (await doc.getPage(p)).getTextContent(), rows=[];
+    tc.items.forEach(it=>{ if(!it.str||!it.str.trim()) return; const x=it.transform[4], y=it.transform[5];
+      let r=rows.find(r=>Math.abs(r.y-y)<3); if(!r){ r={y,it:[]}; rows.push(r); } r.it.push({x,s:it.str,w:it.width||0}); });
+    rows.sort((a,b)=>b.y-a.y).forEach(r=>{ r.it.sort((a,b)=>a.x-b.x); let line='', end=null;
+      r.it.forEach(i=>{ if(end!==null){ const g=i.x-end; line+= g>20?'   ':(g>1?' ':''); } line+=i.s; end=i.x+i.w; }); lines.push(line.trim()); });
+  }
+  try{ doc.destroy(); }catch(e){}
+  return lines.join('\n');
+}
+const pesos = s => Number(String(s).replace(/\./g,'').replace(',','.'));
+function horasDe(s){
+  if(!s) return null; let m=s.match(/(\d+)\s*horas?\s*(\d+)\s*min/i); if(m) return Math.round((+m[1]+ +m[2]/60)*100)/100;
+  m=s.match(/(\d+(?:[.,]\d+)?)\s*(?:horas|hrs)\b/i) || s.match(/(\d+[.,]\d{1,2})(?![\d])/); return m?Number(m[1].replace(',','.')):null;
+}
+const LIQ_RULES=[[/l[ií]quido/i,'liq'],[/total\s+haberes/i,'totHab'],[/total\s+descuentos/i,'totDesc'],[/descuentos\s+legales/i,'skip'],[/otros\s+descuentos/i,'skip'],
+  [/haberes\s+no\s+imponibles/i,'noimpTot'],[/haberes\s+imponibles/i,'impTot'],[/imp\.?\s*prev|imp\.?\s*ces|base\s+tributable|^uf\b|tope|valor\s+uf/i,'skip'],
+  [/nocturno\s+domingo|domingo\s+nocturno|nocturno\s+festivo/i,'noctDom'],[/nocturno/i,'noct'],[/domingo|festivo/i,'dom'],[/extra|sobretiempo/i,'extra'],
+  [/gratificaci/i,'grat'],[/presentismo|movilizaci/i,'mov'],[/sueldo\s+base/i,'base'],
+  [/previ|afp/i,'afp'],[/salud|fonasa|isapre/i,'sal'],[/cesant/i,'ces'],[/impuesto/i,'impu'],
+  [/anticipo|pr[eé]stamo|cuota|descuento|sindicato|seguro|retenci/i,'otroDesc']];
+const R0 = () => ({ ym:'', horas:null, valorHora:null, afpPct:null, base:0, extra:0, hExtra:null, noct:0, hNoct:null, dom:0, hDom:null, noctDom:0, hNoctDom:null,
+  grat:0, mov:0, otros:[], afp:0, sal:0, ces:0, impu:0, otrosDesc:[], liq:null, impTot:null, totHab:null, totDesc:null, n:0 });
+function parseLiq(text){
+  const R=R0(); let m;
+  const mesRe=new RegExp('Mes:?\\s*('+MESES.join('|')+')\\s+(\\d{4})','i');
+  if((m=text.match(mesRe))) R.ym=m[2]+'-'+pad(MESES.findIndex(x=>x.toLowerCase()===m[1].toLowerCase())+1);
+  if((m=text.match(/Horas\s+Trabajadas:?\s*(\d+(?:[.,]\d+)?)/i))) R.horas=Number(m[1].replace(',','.'));
+  if((m=text.match(/Sueldo\s+Base:?\s*\$\s*([\d.]+)\s*por\s+hora/i))) R.valorHora=pesos(m[1]);
+  if((m=text.match(/Previsi[oó]n:?\s*[^\n(]*\(\s*(\d+(?:[.,]\d+)?)\s*%?\s*\)/i))) R.afpPct=Number(m[1].replace(',','.'));
+  let sec='imp';
+  text.split('\n').forEach(raw=>{
+    const line=raw.replace(/Sueldo\s+Base:?\s*\$\s*[\d.]+\s*por\s+hora/i,'');
+    const re=/([^$]*?)\$\s*([\d.]+(?:,\d+)?)/g; let p;
+    while((p=re.exec(line))){
+      const label=p[1].trim().split(/\s{3,}/).pop().replace(/[:\s]+$/,'').replace(/^\s+/,''), v=pesos(p[2]); if(!label) continue;
+      if(/haberes\s+no\s+imponibles/i.test(label)) sec='noimp';
+      const rule=LIQ_RULES.find(r=>r[0].test(label)), k=rule?rule[1]:'otro';
+      if(k==='skip') continue;
+      R.n++;
+      if(k==='otro'){ R.otros.push({n:label,v,imp:sec!=='noimp'}); continue; }
+      if(k==='otroDesc'){ R.otrosDesc.push({n:label,v}); continue; }
+      if(['liq','totHab','totDesc','noimpTot','impTot'].includes(k)){ R[k]=v; continue; }
+      R[k]+=v;
+      const hk={noct:'hNoct',dom:'hDom',noctDom:'hNoctDom',extra:'hExtra'}[k]; if(hk){ const h=horasDe(label); if(h!=null) R[hk]=(R[hk]||0)+h; }
+    }
+  });
+  return R;
+}
+function realTotals(R){
+  const oi=R.otros.filter(o=>o.imp).reduce((s,o)=>s+o.v,0), on=R.otros.filter(o=>!o.imp).reduce((s,o)=>s+o.v,0);
+  const imp=R.base+R.extra+R.noct+R.dom+R.noctDom+R.grat+oi, totHab=imp+R.mov+on;
+  const desc=R.afp+R.sal+R.ces+R.impu+R.otrosDesc.reduce((s,o)=>s+o.v,0);
+  return {oi,on,imp,totHab,desc,liq:totHab-desc};
+}
+const monthDone = ym => { const [y,mm]=ym.split('-').map(Number); return NOW() >= new Date(y,mm,1); };
+const ymLabel = ym => MESES[Number(ym.slice(5))-1]+' '+ym.slice(0,4);
+function hmTxt(h){ h=Math.abs(h); let H=Math.floor(h), M=Math.round((h-H)*60); if(M===60){H++;M=0;} return H?(H+' h'+(M?' '+pad(M)+' min':'')):(M+' min'); }
+
+function cmpCard(){
+  const ym=UI.ym, done=monthDone(ym), R=D.reales&&D.reales[ym];
+  const [y,mm]=ym.split('-').map(Number), next=new Date(y,mm,1);
+  return `<section class="card pad col gap10" id="cmp-card">
+    <div class="row between gap8"><span class="label" style="font-size:15px">Comparar con tu liquidación real</span><span class="beta">BETA</span></div>
+    ${!done?`<span class="small muted">Disponible desde el ${next.getDate()} de ${MESES[next.getMonth()].toLowerCase()}, cuando ${ymLabel(ym).toLowerCase()} haya terminado.</span>`
+    : R?`<span class="small muted">Comparaste este mes con tu liquidación ${R.fuente==='pdf'?'en PDF':'ingresada a mano'}.</span>
+        <button class="btn" data-a="cmpVer">Ver comparación ${I.arrow}</button>`
+    :`<span class="small muted">Sube el PDF de tu liquidación de ${ymLabel(ym).toLowerCase()}. Leemos el texto en tu teléfono y guardamos sólo los montos: el archivo no se sube ni se guarda.</span>
+      ${UI.cmpBusy?`<div class="note">${I.info}<span>Leyendo tu liquidación…</span></div>`:''}
+      <label class="btn" for="pdf-in" ${UI.cmpBusy?'aria-disabled="true"':''}>${I.doc} Subir PDF</label>
+      <input type="file" id="pdf-in" accept="application/pdf,.pdf" hidden>
+      <button class="btn ghost" data-a="cmpManual">Ingresar montos a mano</button>`}
+    ${UI.cmpErr?`<div class="note err" role="alert">${I.info}<span>${esc(UI.cmpErr)}</span></div>`:''}
+  </section>`;
+}
+async function handlePdf(file){
+  if(!file) return; UI.cmpErr=''; UI.cmpBusy=true; render();
+  try{
+    if(file.size>8e6) throw new Error('grande');
+    let text=await pdfText(file);
+    const R=parseLiq(text); text=null;
+    UI.cmpBusy=false;
+    UI.cmp={ym:UI.ym, step:'review', d:R, fuente:'pdf'};
+  }catch(e){
+    UI.cmpBusy=false;
+    UI.cmpErr = /password/i.test((e&&e.name)||'')||/password/i.test((e&&e.message)||'') ? 'El PDF tiene contraseña. Ábrelo, guárdalo sin contraseña e inténtalo de nuevo, o ingresa los montos a mano.'
+      : (e&&e.message==='grande') ? 'El archivo es demasiado grande. ¿Seguro que es tu liquidación?'
+      : (e&&e.message==='lector') ? 'No se pudo cargar el lector de PDF. Revisa tu conexión e inténtalo de nuevo.'
+      : 'No pudimos leer este PDF. Puedes ingresar los montos a mano.';
+    console.warn('Sueldito: PDF', e);
+  }
+  render();
+}
+function vReview(){
+  const C=UI.cmp, R=C.d, T=realTotals(R);
+  const f=(k,l,hint)=>`<label class="set-r"><span class="col"><span>${l}</span>${hint?`<span class="xs muted">${hint}</span>`:''}</span><input type="number" inputmode="decimal" step="any" id="rv-${k}" data-rv="${k}" value="${R[k]==null?'':R[k]}"></label>`;
+  const lista=(arr,key,imp)=>arr.map((o,i)=>`<div class="set-r" style="flex-wrap:wrap;padding-block:10px"><input type="text" id="rv-${key}-n-${i}" data-rvo="${key}:${i}:n" value="${esc(o.n)}" placeholder="Nombre del ítem" aria-label="Nombre" style="flex:1 1 100%;min-width:0;height:36px;border:1px solid var(--border2);border-radius:10px;background:var(--bg);padding:0 8px">
+      <input type="number" inputmode="numeric" id="rv-${key}-v-${i}" data-rvo="${key}:${i}:v" value="${o.v}" aria-label="Monto">
+      ${imp?`<label class="xs muted row gap4"><input type="checkbox" id="rv-${key}-i-${i}" data-rvo="${key}:${i}:imp" ${o.imp?'checked':''}>Imp.</label>`:''}
+      <button class="icon-btn c-danger" data-a="rvDel" data-k="${key}" data-i="${i}" aria-label="Quitar">${I.trash}</button></div>`).join('');
+  const difLiq = R.liq!=null && Math.abs(R.liq-T.liq)>2;
+  return `<div class="view"><div class="row gap8 full"><button class="icon-btn" style="width:44px;height:44px" data-a="cmpBack" aria-label="Volver">${I.prev}</button>
+      <div class="col grow"><h1 class="h1">Revisa los montos</h1><span class="small muted">${ymLabel(C.ym)} · <span class="beta">BETA</span></span></div></div>
+    <div class="colA">
+      <div class="note">${I.info}<span>${C.fuente==='pdf'?'Estos son los montos que leímos de tu PDF. Corrige lo que no coincida con tu liquidación antes de comparar.':'Copia los montos de tu liquidación. Deja en 0 lo que no aparezca.'} El archivo no se guarda: sólo estos números.</span></div>
+      ${R.ym && R.ym!==C.ym?`<div class="note warn">${I.info}<span>El PDF dice <b>${ymLabel(R.ym)}</b> y estás comparando <b>${ymLabel(C.ym)}</b>.</span></div>
+        ${monthDone(R.ym)?`<button class="btn ghost" data-a="rvMes">Comparar con ${ymLabel(R.ym)}</button>`:''}`:''}
+      ${C.fuente==='pdf' && R.n<4?`<div class="note warn">${I.info}<span>Pudimos leer muy pocos datos de este PDF. Completa los montos a mano.</span></div>`:''}
+      <section class="col gap6"><span class="set-t">Datos del mes</span><div class="card">${f('horas','Horas trabajadas')}${f('valorHora','Valor hora','“Sueldo Base: $ … por hora”')}</div></section>
+      <section class="col gap6"><span class="set-t">Haberes</span><div class="card">
+        ${f('base','Sueldo base')}${f('extra','Horas extra')}${f('hExtra','Horas extra (cantidad)','En horas, ej. 2,5')}
+        ${f('noct','Adicional nocturno')}${f('hNoct','Horas nocturnas','Lo que dice entre paréntesis')}
+        ${f('dom','Horas domingo / festivo')}${f('hDom','Horas de domingo (cantidad)')}
+        ${f('noctDom','Adicional nocturno domingo')}${f('hNoctDom','Horas nocturnas de domingo')}
+        ${f('grat','Gratificación')}${f('mov','Presentismo / movilización')}</div></section>
+    </div><div class="colB">
+      <section class="col gap6"><span class="set-t">Otros haberes (bonos, becas, diferencias)</span><div class="card">${lista(R.otros,'otros',true)}
+        <button class="set-r c-purple" style="width:100%;border-left:0;border-right:0;border-bottom:0;background:none;font-weight:600" data-a="rvAdd" data-k="otros"><span>Agregar haber</span>${I.plus}</button></div></section>
+      <section class="col gap6"><span class="set-t">Descuentos</span><div class="card">${f('afp','AFP (cotización previsional)')}${f('sal','Salud')}${f('ces','Seguro de cesantía')}${f('impu','Impuesto único')}
+        ${lista(R.otrosDesc,'otrosDesc',false)}
+        <button class="set-r c-purple" style="width:100%;border-left:0;border-right:0;border-bottom:0;background:none;font-weight:600" data-a="rvAdd" data-k="otrosDesc"><span>Agregar otro descuento</span>${I.plus}</button></div></section>
+      <section class="col gap6"><span class="set-t">Resultado</span><div class="card">${f('liq','Líquido a recibir')}
+        <div class="set-r"><span class="muted">Suma de lo que ingresaste</span><b class="num" id="rv-calc">${money(T.liq)}</b></div></div></section>
+      <div id="rv-warn">${difLiq?`<div class="note warn">${I.info}<span>La suma de los montos (${money(T.liq)}) no coincide con el líquido (${money(R.liq)}). Revisa si falta o sobra algún ítem.</span></div>`:''}</div>
+      <button class="btn" style="height:52px" data-a="rvSave">Guardar y comparar</button>
+      <button class="btn ghost" data-a="cmpBack">Cancelar</button>
+    </div></div>`;
+}
+function cmpRows(ym){
+  const P=monthData(ym).total, c=D.cfg, V=c.valorHora, R=D.reales[ym], T=realTotals(R), r=x=>x||0;
+  const estOtros=P.habImp.concat(P.habNo).reduce((s,h)=>s+h.monto,0);
+  const rows=[
+    ['Horas trabajadas',P.hTot,R.horas,'h'],
+    ['Sueldo base',P.base,R.base,'hab',V],
+    (P.extra||R.extra)?['Horas extra',P.extra,R.extra,'hab',V*(1+c.rExtra/100)]:null,
+    ['Adicional nocturno',P.noct,R.noct,'hab',V*c.rNoct/100],
+    ['Domingo / festivo',P.dom,R.dom,'hab',V*c.rDom/100],
+    ['Nocturno domingo',P.noctDom,R.noctDom,'hab',V*c.rNoctDom/100],
+    (estOtros||T.oi||T.on)?['Otros haberes',estOtros,T.oi+T.on,'hab',null]:null,
+    ['Gratificación',P.grat,R.grat,'hab',null],
+    ['Presentismo / movilización',P.mov,R.mov,'hab',null],
+    ['Total haberes',P.totHab,T.totHab,'tot',V],
+    ['AFP',P.afp,R.afp,'desc'],['Salud',P.sal,R.sal,'desc'],['Seguro de cesantía',P.ces,R.ces,'desc'],
+    (R.impu||R.otrosDesc.length)?['Impuesto y otros descuentos',0,R.impu+R.otrosDesc.reduce((s,o)=>s+o.v,0),'desc']:null,
+    ['Total descuentos',P.desc,T.desc,'desc']
+  ].filter(Boolean);
+  return {P,R,T,rows,liqReal:R.liq!=null?R.liq:T.liq};
+}
+function diffChip(est,real,kind,rate){
+  if(real==null||est==null) return `<span class="d eq">—</span>`;
+  const d=real-est;
+  if(kind==='h'){ if(Math.abs(d)<0.02) return `<span class="d eq">=</span>`; return `<span class="d ${d>0?'up':'down'}">${d>0?'+':'−'}${hmTxt(d)}</span>`; }
+  if(Math.abs(d)<1) return `<span class="d eq">=</span>`;
+  const good = kind==='desc' ? d<0 : d>0;
+  const eq = rate && kind!=='desc' && Math.abs(d)/rate*60>=1 ? `<small>≈ ${hmTxt(Math.abs(d)/rate)}</small>` : '';
+  return `<span class="d ${good?'up':'down'}">${d>0?'+':'−'}${money(Math.abs(d))}${eq}</span>`;
+}
+function diag(ym){
+  const {P,R,T}=cmpRows(ym), c=D.cfg, out=[], pct=(a,b)=>b>0?a/b*100:null, r2=x=>Math.round(x*100)/100, f2=x=>String(r2(x)).replace('.',',');
+  const impR=R.impTot||T.imp;
+  const vh=R.valorHora || (R.base&&R.horas?R.base/R.horas:null);
+  if(vh && Math.abs(vh-c.valorHora)>=1) out.push(['error',`Tu valor hora está configurado en ${money(c.valorHora)}, pero tu liquidación indica ${money(vh)}.`,'valorHora',Math.round(vh)]);
+  let p=R.afpPct || pct(R.afp,impR);
+  if(p && Math.abs(p-c.afpPct)>0.05) out.push(['error',`Tu AFP descuenta ${f2(p)}% y en tu configuración tienes ${f2(c.afpPct)}%.`,'afpPct',r2(p)]);
+  p=pct(R.sal,impR); if(p && Math.abs(p-c.saludPct)>0.05) out.push(['error',`Tu salud descuenta ${f2(p)}% y en tu configuración tienes ${f2(c.saludPct)}%.`,'saludPct',r2(p)]);
+  if(impR>0 && !R.ces && c.contrato==='indefinido') out.push(['aviso','Tu liquidación no descuenta seguro de cesantía. Si tu contrato es a plazo fijo, cámbialo en tu configuración.','contrato','plazo']);
+  else if(R.ces && c.contrato!=='indefinido') out.push(['aviso','Tu liquidación descuenta seguro de cesantía, lo que corresponde a un contrato indefinido.','contrato','indefinido']);
+  else if(R.ces){ p=pct(R.ces,impR); if(p && Math.abs(p-c.cesPct)>0.05) out.push(['aviso',`El seguro de cesantía es ${f2(p)}% y tienes ${f2(c.cesPct)}%.`,'cesPct',r2(p)]); }
+  const tope=Math.round(4.75*c.imm/12);
+  if(R.grat>0){ if(!c.gratOn) out.push(['error','Tu liquidación incluye gratificación, pero la tienes desactivada.','gratOn',true]);
+    else if(R.grat<tope-2){ p=pct(R.grat,impR-R.grat); if(p && Math.abs(p-c.gratPct)>0.5) out.push(['aviso',`Tu gratificación equivale a ${f2(p)}% y tienes ${f2(c.gratPct)}%.`,'gratPct',Math.round(p*10)/10]); } }
+  else if(impR>0 && c.gratOn) out.push(['aviso','Tu liquidación no incluye gratificación, pero la tienes activada.','gratOn',false]);
+  if(R.mov>0 && R.base>0){ p=pct(R.mov,R.base); if(Math.abs(p-c.presPct)>1) out.push(['aviso',`Tu presentismo equivale a ${f2(p)}% de tu sueldo base y tienes ${f2(c.presPct)}%.`,'presPct',Math.round(p*10)/10]);
+    if(!presOf(ym)) out.push(['info','Te pagaron presentismo, pero este mes tienes la casilla desmarcada.','pres',true]); }
+  else if(!R.mov && presOf(ym)) out.push(['info','Este mes no te pagaron presentismo y tienes la casilla marcada.','pres',false]);
+  const V=vh||c.valorHora;
+  [['noct','hNoct','rNoct','nocturno'],['dom','hDom','rDom','de domingo o festivo'],['noctDom','hNoctDom','rNoctDom','nocturno de domingo']].forEach(([a,h,k,n])=>{
+    if(R[a]>0 && R[h]>0){ const q=R[a]/(R[h]*V)*100; if(Math.abs(q-c[k])>1) out.push(['aviso',`Tu recargo ${n} equivale a ${f2(q)}% y tienes ${c[k]}%.`,k,Math.round(q)]); } });
+  if(R.horas!=null && Math.abs(R.horas-P.hTot)>=0.5) out.push(['info',`Registraste ${fh(P.hTot)} y la liquidación indica ${fh(R.horas)} (${R.horas>P.hTot?'+':'−'}${hmTxt(R.horas-P.hTot)}). Puede faltar algún turno, o tus marcas y breaks reales fueron distintos.`]);
+  if(R.hNoct!=null && Math.abs(R.hNoct-P.hNoct)>=0.5) out.push(['info',`Horas nocturnas: Sueldito calculó ${fh(P.hNoct)} y la liquidación indica ${fh(R.hNoct)}.`]);
+  R.otros.forEach(o=>{ const ws=o.n.toLowerCase().split(/[^a-záéíóúñ]+/).filter(w=>w.length>=4); if(!D.haberes.some(h=>{ const hn=h.nombre.toLowerCase(); return ws.some(w=>hn.includes(w)); })) out.push(['info',`Tu liquidación incluye “${o.n}” (${money(o.v)}). Si se repite cada mes, agrégalo en Ajustes → Otros haberes.`]); });
+  return out;
+}
+function vCmp(){
+  const ym=UI.cmp.ym, {P,R,T,rows,liqReal}=cmpRows(ym), d=liqReal-P.liq, V=D.cfg.valorHora, ds=diag(ym);
+  const icon={error:'c-danger',aviso:'c-warn',info:'c-purple'};
+  const fixTxt=(k,v)=>({valorHora:'Usar '+money(v),afpPct:'Usar '+String(v).replace('.',',')+'%',saludPct:'Usar '+String(v).replace('.',',')+'%',cesPct:'Usar '+String(v).replace('.',',')+'%',gratPct:'Usar '+String(v).replace('.',',')+'%',presPct:'Usar '+String(v).replace('.',',')+'%',rNoct:'Usar '+v+'%',rDom:'Usar '+v+'%',rNoctDom:'Usar '+v+'%',contrato:v==='plazo'?'Cambiar a plazo fijo':'Cambiar a indefinido',gratOn:v?'Activar':'Desactivar',pres:v?'Marcar':'Desmarcar'})[k];
+  return `<div class="view"><div class="row gap8 full"><button class="icon-btn" style="width:44px;height:44px" data-a="cmpBack" aria-label="Volver">${I.prev}</button>
+      <div class="col grow"><h1 class="h1">Estimado vs. real</h1><span class="small muted">${ymLabel(ym)} · <span class="beta">BETA</span></span></div></div>
+    <div class="colA">
+      <section class="hero" style="gap:10px"><span class="lbl">Tu líquido real fue</span>
+        <span class="big" style="font-size:clamp(30px,9vw,40px);color:${Math.abs(d)<1?'var(--hero-ink)':(d>0?'var(--hero-green)':'#FF9C94')}">${Math.abs(d)<1?'igual al estimado':(d>0?'+':'−')+money(Math.abs(d))}</span>
+        <span class="small" style="color:var(--hero-muted)">${Math.abs(d)<1?'':(d>0?'más':'menos')+' de lo que estimó Sueldito'+(Math.abs(d)/V*60>=1?' · ≈ '+hmTxt(Math.abs(d)/V)+' de trabajo':'')}</span>
+        <div class="row between small" style="color:var(--hero-muted)"><span>Estimado ${money(P.liq)}</span><span>Real ${money(liqReal)}</span></div></section>
+      <div class="card" style="padding:12px 12px 4px">
+        <div class="cmp-head"><span style="text-align:right;padding-right:10px">Estimado</span><span style="text-align:center">Diferencia</span><span style="padding-left:10px">Real</span></div>
+        <div class="cmp">${rows.map(([l,e,r,k,rate])=>`<div class="cmp-r ${k==='tot'?'tot':''}"><span class="lb">${l}</span>
+          <span class="e num">${k==='h'?fh(e||0):money(e||0)}</span>${diffChip(e,r,k,rate)}<span class="r num">${r==null?'—':(k==='h'?fh(r):money(r))}</span></div>`).join('')}
+          <div class="cmp-r tot"><span class="lb">Líquido a recibir</span><span class="e num">${money(P.liq)}</span>${diffChip(P.liq,liqReal,'tot',V)}<span class="r num">${money(liqReal)}</span></div></div>
+        <p class="xs muted" style="padding:10px 2px">Verde: recibiste más de lo estimado. Rojo: recibiste menos. El tiempo (≈) es una aproximación: la diferencia dividida por lo que vale una hora de ese ítem.</p>
+      </div>
+    </div><div class="colB">
+      <section class="col gap8"><span class="set-t">Revisa tu configuración</span>
+        ${ds.length?ds.map(([n,t,k,v])=>`<div class="card pad col gap8"><div class="row gap10" style="align-items:flex-start"><span class="${icon[n]}" style="flex-shrink:0;margin-top:2px">${I.info}</span><span class="small" style="line-height:1.45">${esc(t)}</span></div>
+          ${k?`<button class="btn ghost" style="height:40px;font-size:14px" data-a="cmpFix" data-k="${k}" data-v="${v}">${fixTxt(k,v)}</button>`:''}</div>`).join('')
+          :`<div class="card pad small">No encontramos diferencias en tu configuración. Las diferencias que veas probablemente vienen de tus marcas reales de entrada, salida o break.</div>`}
+        ${ds.some(x=>x[2]&&x[2]!=='pres')?`<span class="xs muted">Los cambios de configuración se aplican a todos los meses.</span>`:''}
+      </section>
+      <div class="grid2"><button class="btn ghost" data-a="cmpEdit">Editar montos</button>${UI.cmpDelConf?`<button class="btn danger" data-a="cmpDelSi">Sí, borrar</button>`:`<button class="btn danger" data-a="cmpDel">Borrar comparación</button>`}</div>
+    </div></div>`;
+}
+function rvRead(el){
+  const R=UI.cmp.d;
+  if(el.dataset.rv){ const v=el.value.trim(); R[el.dataset.rv]= v===''?(['horas','valorHora','afpPct','hNoct','hDom','hNoctDom','hExtra','liq'].includes(el.dataset.rv)?null:0):Number(v.replace(',','.')); }
+  else if(el.dataset.rvo){ const [k,i,f]=el.dataset.rvo.split(':'); const o=R[k][+i]; if(!o) return; if(f==='n') o.n=el.value; else if(f==='v') o.v=Number(el.value)||0; else o.imp=el.checked; }
+  const T=realTotals(R), c=document.getElementById('rv-calc'), w=document.getElementById('rv-warn');
+  if(c) c.textContent=money(T.liq);
+  if(w) w.innerHTML = R.liq!=null && Math.abs(R.liq-T.liq)>2 ? `<div class="note warn">${I.info}<span>La suma de los montos (${money(T.liq)}) no coincide con el líquido (${money(R.liq)}). Revisa si falta o sobra algún ítem.</span></div>` : '';
+}
+function cmpAct(a, ds){
+  switch(a){
+    case 'cmpVer': UI.cmp={ym:UI.ym, step:'view'}; UI.cmpDelConf=false; UI.resetScroll=true; render(); return true;
+    case 'cmpManual': UI.cmpErr=''; UI.cmp={ym:UI.ym, step:'review', d:R0(), fuente:'manual'}; UI.resetScroll=true; render(); return true;
+    case 'cmpBack': UI.cmp=null; UI.cmpDelConf=false; UI.resetScroll=true; render(); return true;
+    case 'cmpEdit': { const R=JSON.parse(JSON.stringify(D.reales[UI.cmp.ym])); UI.cmp={ym:UI.cmp.ym, step:'review', d:R, fuente:R.fuente||'manual'}; render(); return true; }
+    case 'cmpDel': UI.cmpDelConf=true; render(); return true;
+    case 'cmpDelSi': delete D.reales[UI.cmp.ym]; save(); UI.cmp=null; UI.cmpDelConf=false; render(); toast('Comparación borrada'); return true;
+    case 'rvAdd': UI.cmp.d[ds.k].push(ds.k==='otros'?{n:'',v:0,imp:true}:{n:'',v:0}); render(); return true;
+    case 'rvDel': UI.cmp.d[ds.k].splice(+ds.i,1); render(); return true;
+    case 'rvMes': UI.cmp.ym=UI.cmp.d.ym; UI.ym=UI.cmp.d.ym; render(); return true;
+    case 'rvSave': { const R=UI.cmp.d, ym=UI.cmp.ym;
+      R.otros=R.otros.filter(o=>o.n.trim()||o.v); R.otrosDesc=R.otrosDesc.filter(o=>o.n.trim()||o.v);
+      if(!(R.base>0) && !(R.liq>0)){ toast('Ingresa al menos el sueldo base y el líquido.'); return true; }
+      const keep={}; ['horas','valorHora','afpPct','base','extra','hExtra','noct','hNoct','dom','hDom','noctDom','hNoctDom','grat','mov','afp','sal','ces','impu','liq','impTot','totHab','totDesc'].forEach(k=>keep[k]=R[k]);
+      keep.otros=R.otros.map(o=>({n:o.n.trim(),v:o.v,imp:!!o.imp})); keep.otrosDesc=R.otrosDesc.map(o=>({n:o.n.trim(),v:o.v}));
+      keep.fuente=UI.cmp.fuente; keep.fecha=new Date().toISOString();
+      D.reales=D.reales||{}; D.reales[ym]=keep; save(); UI.cmp={ym, step:'view'}; UI.resetScroll=true; render(); return true; }
+    case 'cmpFix': { const k=ds.k, raw=ds.v, ym=UI.cmp.ym;
+      if(k==='pres') D.pres[ym]=raw==='true';
+      else if(k==='contrato') D.cfg.contrato=raw;
+      else if(k==='gratOn') D.cfg.gratOn=raw==='true';
+      else D.cfg[k]=Number(raw);
+      save(); render(); toast('Ajuste aplicado'); return true; }
+  }
+  return false;
+}
 
 /* ================= Arranque ================= */
 function afterLoad(){
