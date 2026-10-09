@@ -14,6 +14,7 @@
 
 
 
+
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
 <style>
 /* Layout: app de una pantalla; contenido con scroll, barra de pestañas abajo, hojas inferiores para editar. */
@@ -97,8 +98,8 @@ nav.tabs button[aria-current="page"]{color:var(--purple);font-weight:600}
 .hero .big{font-family:var(--display);font-size:clamp(38px,12vw,48px);font-weight:700;letter-spacing:-1.5px;line-height:1;font-variant-numeric:tabular-nums}
 .hero .info{width:32px;height:32px;border:0;border-radius:999px;background:rgba(255,255,255,.1);color:var(--hero-muted);display:flex;align-items:center;justify-content:center}
 .bar{height:12px;border-radius:999px;background:rgba(255,255,255,.12);display:flex;overflow:hidden}
-.bar .g{background:var(--hero-green);transition:width .7s cubic-bezier(.2,.8,.2,1)}
-.bar .a{background:repeating-linear-gradient(45deg,var(--hero-purple) 0 4px,transparent 4px 7px);transition:width .7s cubic-bezier(.2,.8,.2,1)}
+.bar .g{background:var(--hero-green);transition:width 2.5s cubic-bezier(.2,.8,.2,1)}
+.bar .a{background:repeating-linear-gradient(45deg,var(--hero-purple) 0 4px,transparent 4px 7px);transition:width 2.5s cubic-bezier(.2,.8,.2,1)}
 .duo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .duo .card{padding:14px;display:flex;flex-direction:column;gap:8px}
 .duo .card.dash{border:1.5px dashed var(--purple-line)}
@@ -178,6 +179,21 @@ nav.tabs button[aria-current="page"]{color:var(--purple);font-weight:600}
 .afp{min-height:44px;padding:0 14px;display:flex;align-items:center;gap:12px;border-top:1px solid var(--surf2)}
 .afp:first-child{border-top:0}
 .afp input{width:20px;height:20px;margin:0;accent-color:var(--purple)}
+.avatar{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;object-fit:cover;flex-shrink:0;background:var(--tint);color:var(--purple);font-family:var(--display);font-weight:700;border:2px solid var(--surf)}
+.avatar-btn{border:0;background:none;padding:0;border-radius:999px;flex-shrink:0}
+.avatar-pick{position:relative;cursor:pointer;border-radius:999px;display:inline-flex}
+.avatar-cam{position:absolute;right:-2px;bottom:-2px;width:34px;height:34px;border-radius:999px;background:var(--btn);color:#fff;display:flex;align-items:center;justify-content:center;border:3px solid var(--bg)}
+.avatar-cam svg{width:16px;height:16px}
+.cele{position:fixed;inset:0;z-index:35;background:rgba(10,8,20,.45);display:flex;align-items:center;justify-content:center;padding:24px;transition:opacity .3s}
+.cele.out{opacity:0}
+.cele-card{width:100%;max-width:340px;background:var(--hero);color:#fff;border-radius:28px;padding:28px 22px 20px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.4);animation:pop .6s cubic-bezier(.2,1.4,.4,1)}
+.cele-ic{width:76px;height:76px;border-radius:999px;background:var(--hero-green);color:#24174F;display:flex;align-items:center;justify-content:center;margin-bottom:6px;animation:pop .6s .1s cubic-bezier(.2,1.6,.4,1) both}
+.cele-t{font-family:var(--display);font-size:24px;font-weight:700;letter-spacing:-.4px}
+.cele-m{font-family:var(--display);font-size:clamp(40px,13vw,52px);font-weight:700;color:var(--hero-green);letter-spacing:-1.5px;line-height:1.05}
+.cele-s{font-size:13px;color:var(--hero-muted)}
+.cele-b{margin-top:10px;height:48px;width:100%;border:0;border-radius:14px;background:var(--hero-green);color:#24174F;font-size:16px;font-weight:700}
+@keyframes pop{0%{transform:scale(.5);opacity:0}70%{transform:scale(1.06);opacity:1}100%{transform:scale(1)}}
+.earned{animation:earn 2.4s ease-out}
 .beta{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.6px;padding:2px 8px;border-radius:999px;background:var(--warn-tint);color:var(--warn);vertical-align:middle;line-height:1.5}
 .cmp-head{display:grid;grid-template-columns:minmax(0,1fr) 116px minmax(0,1fr);font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;padding-bottom:6px}
 .cmp{position:relative;display:flex;flex-direction:column}
@@ -195,7 +211,7 @@ label.btn{cursor:pointer}
 @media (min-width: 900px){
   .shell[data-mode="app"]{max-width:1240px;flex-direction:row}
   .shell[data-mode="app"] nav.tabs{order:-1;width:224px;flex-shrink:0;display:flex;flex-direction:column;gap:4px;padding:28px 14px;border-top:0;border-right:1px solid var(--border)}
-  .shell[data-mode="app"] nav.tabs::before{content:'Sueldito';font-family:var(--display);font-weight:700;font-size:22px;letter-spacing:-.4px;padding:0 12px 20px;color:var(--purple)}
+  .shell[data-mode="app"] nav.tabs::before{content:'SUELDITO';font-family:var(--display);font-weight:700;font-size:22px;letter-spacing:-.4px;padding:0 12px 20px;color:var(--purple)}
   .shell[data-mode="app"] nav.tabs button{height:48px;flex-direction:row;justify-content:flex-start;gap:12px;padding:0 12px;border-radius:12px;font-size:14px}
   .shell[data-mode="app"] nav.tabs button[aria-current="page"]{background:var(--tint)}
   .shell[data-mode="app"] main{padding:32px 36px 56px}
@@ -254,7 +270,7 @@ const SB_URL = 'https://ffmpdtozmarlmnauiuvf.supabase.co';
 const SB_KEY = 'sb_publishable_LxBezHj77R3yeCDHgu4otg_YxGdMWCR';
 const LEGACY_KEY = 'sueldito.v1';
 let sb = null, USER = null, KEY = null, mem = null, RECOVERY = false;
-const blank = () => ({ v:2, onboarded:false, cfg:{...CFG0}, shifts:[], pres:{}, haberes:[], ferOff:[], ferExtra:[], demoIds:[], lastSeen:0, ejemplo:false, reales:{}, pend:{cfg:false,up:[],del:[]} });
+const blank = () => ({ v:2, onboarded:false, cfg:{...CFG0}, shifts:[], pres:{}, haberes:[], ferOff:[], ferExtra:[], demoIds:[], lastSeen:0, ejemplo:false, reales:{}, perfil:{nick:'',foto:''}, pend:{cfg:false,up:[],del:[]} });
 function fix(d){ const b=blank(); d={...b,...d}; d.cfg={...CFG0,...d.cfg}; d.pend={...b.pend,...(d.pend||{})}; return d; }
 function lsGet(k){ try{ const t=localStorage.getItem(k); if(t) return JSON.parse(t); }catch(e){} return null; }
 function saveLocal(){ mem=D; if(!KEY) return; try{ localStorage.setItem(KEY, JSON.stringify(D)); }catch(e){} }
@@ -269,7 +285,7 @@ const toRow = s => ({ id:s.id, user_id:USER.id, fecha:s.f, entrada:s.e, salida:s
   extra:s.extra||'no', extra_desde:s.xd||null, extra_hasta:s.xh||null, licencia:!!s.lic, updated_at:new Date().toISOString() });
 const fromRow = r => ({ id:r.id, f:r.fecha, e:t5(r.entrada), s:t5(r.salida), bi:t5(r.break_ida), bv:t5(r.break_vuelta), sinBreak:!!r.sin_break,
   extra:r.extra||'no', xd:t5(r.extra_desde), xh:t5(r.extra_hasta), lic:!!r.licencia });
-const cfgPayload = () => ({ onboarded:D.onboarded, cfg:D.cfg, pres:D.pres, haberes:D.haberes, ferOff:D.ferOff, ferExtra:D.ferExtra, demoIds:D.demoIds, ejemplo:D.ejemplo, reales:D.reales });
+const cfgPayload = () => ({ onboarded:D.onboarded, cfg:D.cfg, pres:D.pres, haberes:D.haberes, ferOff:D.ferOff, ferExtra:D.ferExtra, demoIds:D.demoIds, ejemplo:D.ejemplo, reales:D.reales, perfil:D.perfil });
 let flushT=null, flushing=false, SYNC='ok';
 function setSync(v){ SYNC=v; const el=document.getElementById('sync-st'); if(el) el.textContent=syncText(); }
 const syncText = () => SYNC==='ok' ? 'Todo guardado en la nube' : (SYNC==='subiendo' ? 'Guardando…' : 'Cambios pendientes: se guardarán al recuperar conexión');
@@ -319,7 +335,8 @@ async function startSession(user){
     if(!local){ UI.step='error'; render(); return; }
     setSync('pendiente'); setTimeout(()=>toast('Sin conexión. Mostrando lo guardado en este teléfono.'),500); }
   if(RECOVERY) return;
-  applyTheme(); UI.step = D.onboarded ? null : 'welcome'; UI.tab='resumen'; UI.animate=true;
+  if(UI.pendingNick && !(D.perfil&&D.perfil.nick)){ D.perfil={nick:UI.pendingNick, foto:''}; save(); } UI.pendingNick='';
+  applyTheme(); UI.step = !(D.perfil&&D.perfil.nick) ? 'nick' : (D.onboarded ? null : 'welcome'); if(UI.step==='nick'){ UI.nickDraft={nick:'',foto:''}; UI.nickErr=''; } UI.tab='resumen'; UI.animate=true;
   afterLoad(); render();
 }
 async function refreshFromCloud(){
@@ -469,7 +486,7 @@ function validate(sh){
 const labelDia = d => DIA3[d.getDay()].toLowerCase()+' '+d.getDate()+' '+MES3[d.getMonth()];
 
 /* ================= Estado de interfaz ================= */
-const UI = { tab:'resumen', ym:ymOf(new Date()), vista:'lista', selDay:null, modo:'G', step:'loading', auth:{modo:'login',msg:'',ok:'',busy:false,email:''}, imp:null, cmp:null, cmpBusy:false, cmpErr:'', cmpDelConf:false,
+const UI = { tab:'resumen', ym:ymOf(new Date()), vista:'lista', selDay:null, modo:'G', step:'loading', auth:{modo:'login',msg:'',ok:'',busy:false,email:''}, imp:null, nickDraft:null, nickErr:'', pendingNick:'', cmp:null, cmpBusy:false, cmpErr:'', cmpDelConf:false,
   sheet:null, animate:true, earned:[], fromG:null, toast:null, cfgDraft:null, habForm:false, confirmBorrar:false, verFer:false };
 
 /* ================= Iconos ================= */
@@ -521,7 +538,8 @@ function vResumen(){
   const lista=[...(ult?[[ult,'Último turno']]:[]), ...prox.map(s=>[s,statusOf(s,now)==='C'?'En curso ahora':'Próximo'])];
   const fromG = UI.fromG!==null ? UI.fromG : 0;
   return `<div class="view"><div class="row between gap8 full">
-    <div class="col" style="gap:2px"><span class="small muted">Hoy · ${labelDia(now)}, ${hm(now)}</span><h1 class="h1">Mi sueldo</h1></div>${monthPill()}</div><div class="colA">
+    <div class="row gap12" style="min-width:0"><button class="avatar-btn" data-a="perfilEdit" aria-label="Editar perfil">${avatar(48)}</button><div class="col" style="gap:2px;min-width:0"><span class="small muted" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Hola, ${esc((D.perfil&&D.perfil.nick)||'')}</span><h1 class="h1" style="white-space:nowrap">Mi sueldo</h1></div></div><span class="small muted" style="text-align:right">Hoy<br>${labelDia(now)}, ${hm(now)}</span></div>
+    <div class="row full">${monthPill()}</div><div class="colA">
   ${D.ejemplo?`<div class="note"><span class="grow"><b>Datos de ejemplo.</b> Estos turnos no son tuyos: sirven para probar.</span><button class="tag c-purple" style="border:0;min-height:32px" data-a="borrarEjemplo">Quitar</button></div>`:''}
   <section class="hero">
     <div class="row between"><span class="lbl">Líquido proyectado del mes · aprox.</span><button class="info" data-a="aviso" aria-label="Por qué es aproximado">${I.info}</button></div>
@@ -631,7 +649,7 @@ function vLiq(){
     ${r('AFP '+esc(c.afp)+' '+String(c.afpPct).replace('.',',')+'%','',P.afp)}${r((c.salud==='fonasa'?'Fonasa ':'Isapre ')+String(c.saludPct).replace('.',',')+'%','',P.sal)}
     ${r('Seguro cesantía '+(c.contrato==='indefinido'?String(c.cesPct).replace('.',',')+'%':'(plazo fijo: no aplica)'),'',P.ces)}
     <div class="liq-tot"><span class="muted">Total haberes</span><span class="num">${money(P.totHab)}</span><span class="muted">Total descuentos</span><span class="num">${money(P.desc)}</span>
-      <span class="muted">Base tributable</span><span class="num">${money(P.trib)}</span><span class="muted">Impuesto único</span><span>No calculado en esta versión</span></div>
+      <span class="muted">Base tributable</span><span class="num">${money(P.trib)}</span></div>
     <div class="liq-fin"><span class="label" style="font-size:14px">Líquido a recibir</span><span class="num" style="font-size:24px;font-weight:600">${money(P.liq)}</span></div>
   </div>${cmpCard()}</div></div>`;
 }
@@ -643,6 +661,7 @@ function vAjustes(){
   const year=UI.ym.slice(0,4), fer=FERIADOS.filter(f=>f[0].startsWith(year));
   return `<div class="view v-aj"><h1 class="h1 full">Ajustes</h1>
   <section class="col gap6"><span class="set-t">Mi cuenta</span><div class="card">
+    <button class="set-r" style="width:100%;border:0;background:none;text-align:left;padding-block:12px" data-a="perfilEdit"><span class="row gap12" style="min-width:0">${avatar(52)}<span class="col" style="min-width:0"><b style="font-size:16px">${esc((D.perfil&&D.perfil.nick)||'Sin nickname')}</b><span class="xs c-purple" style="font-weight:600">Editar perfil</span></span></span>${I.arrow}</button>
     <div class="set-r"><span class="col" style="min-width:0"><span style="overflow-wrap:anywhere">${USER?esc(USER.email||''):'Sin sesión'}</span><span class="xs muted" id="sync-st">${syncText()}</span></span></div>
     <button class="set-r c-purple" style="width:100%;border-left:0;border-right:0;border-bottom:0;background:none;font-weight:600" data-a="logout"><span>Cerrar sesión</span>${I.arrow}</button></div></section>
   <section class="col gap6"><span class="set-t">Apariencia</span>
@@ -681,7 +700,7 @@ function vAjustes(){
     <span class="small muted">Tus turnos y tu configuración se guardan en tu cuenta. El dinero no se guarda: se calcula en tu teléfono.</span>
     <button class="btn ghost" data-a="ejemplo">Cargar turnos de ejemplo en este mes</button>
     ${UI.confirmBorrar?`<div class="grid2"><button class="btn ghost" data-a="borrarNo">Cancelar</button><button class="btn danger" data-a="borrarSi">Sí, borrar todo</button></div>`:`<button class="btn danger" data-a="borrar">Borrar todos mis datos</button>`}</div></section>
-  <section class="col gap6"><span class="set-t">Sobre Sueldito</span><div class="card pad small" style="line-height:1.5">Sueldito es una referencia para ordenar tus finanzas: te muestra cuánto llevas ganado y cuánto viene según los turnos que registras. Los montos son aproximados. Minutos de diferencia en tus marcas de entrada, salida o break, y ajustes de tu empleador, pueden cambiar el resultado. Tu liquidación oficial es la que vale.</div></section></div>`;
+  <section class="col gap6"><span class="set-t">Sobre SUELDITO</span><div class="card pad small" style="line-height:1.5">Sueldito es una referencia para ordenar tus finanzas: te muestra cuánto llevas ganado y cuánto viene según los turnos que registras. Los montos son aproximados. Minutos de diferencia en tus marcas de entrada, salida o break, y ajustes de tu empleador, pueden cambiar el resultado. Tu liquidación oficial es la que vale.</div></section></div>`;
 }
 function vLoading(){ return `<main style="justify-content:center;align-items:center"><span class="label c-purple" style="letter-spacing:.6px">SUELDITO</span><span class="muted">Cargando tus datos…</span></main>`; }
 function vError(){ return `<main style="justify-content:center;gap:16px"><h1 class="h1">No pudimos cargar tus datos</h1><p class="muted">Necesitas conexión a internet la primera vez que entras en este dispositivo.</p><button class="btn" data-a="retry">Reintentar</button><button class="btn ghost" data-a="logout">Cerrar sesión</button></main>`; }
@@ -694,6 +713,7 @@ function vAuth(){
     ${a.msg?`<div class="note err" role="alert">${I.info}<span>${esc(a.msg)}</span></div>`:''}
     ${a.ok?`<div class="note" role="status">${I.info}<span>${esc(a.ok)}</span></div>`:''}
     <div class="field"><label class="label" for="au-e">Correo</label><input class="input" id="au-e" type="email" autocomplete="email" inputmode="email" placeholder="tu@correo.com" value="${esc(a.email)}"></div>
+    ${reg?`<div class="field"><label class="label" for="au-n">Nickname</label><input class="input" id="au-n" maxlength="20" autocomplete="nickname" placeholder="Cómo quieres que te vean" value="${esc(a.nick||'')}"></div>`:''}
     ${rec?'':`<div class="field"><label class="label" for="au-p">Contraseña</label><input class="input" id="au-p" type="password" autocomplete="${reg?'new-password':'current-password'}" placeholder="${reg?'Mínimo 8 caracteres':'Tu contraseña'}"></div>`}
     ${reg?`<label class="check small"><input type="checkbox" id="au-ok"><span>Entiendo que los montos son aproximados y acepto que mis turnos y mi configuración se guarden en mi cuenta.</span></label>`:''}
     <button class="btn" style="height:54px;border-radius:16px;font-size:16px" data-a="authGo" ${a.busy?'disabled':''}>${a.busy?'Un momento…':(rec?'Enviar enlace':(reg?'Crear cuenta':'Entrar'))}</button>
@@ -826,6 +846,7 @@ function render(){
   else if(UI.step==='auth'){ app.innerHTML=vAuth(); }
   else if(UI.step==='newpass'){ app.innerHTML=vNewPass(); }
   else if(UI.step==='error'){ app.innerHTML=vError(); }
+  else if(UI.step==='nick'){ app.innerHTML=vNick(); }
   else if(UI.step==='welcome'){ app.innerHTML=vWelcome(); }
   else if(UI.step==='config'){ app.innerHTML=vConfig(); }
   else {
@@ -840,7 +861,7 @@ function render(){
 }
 function renderSheet(){
   const el=document.getElementById('sheet');
-  el.innerHTML = !UI.sheet ? '' : (UI.sheet.type==='shift' ? sheetShift() : sheetAviso());
+  el.innerHTML = !UI.sheet ? '' : (UI.sheet.type==='shift' ? sheetShift() : (UI.sheet.type==='perfil' ? sheetPerfil() : sheetAviso()));
   if(UI.sheet && UI.sheet.type==='shift') previewShift();
 }
 function renderToast(){
@@ -855,7 +876,7 @@ function runAnim(){
   if(!UI.animate || reduce){ bars.forEach(b=>b.style.width=b.dataset.w+'%'); UI.animate=false; UI.fromG=null; return; }
   UI.animate=false; UI.fromG=null;
   requestAnimationFrame(()=>bars.forEach(b=>b.style.width=b.dataset.w+'%'));
-  const t0=performance.now(), dur=700;
+  const t0=performance.now(), dur=2500;
   els.forEach(e=>e.setAttribute('aria-label',e.textContent));
   (function step(t){ const x=Math.min(1,(t-t0)/dur), p=1-Math.pow(1-x,3);
     els.forEach(e=>{ if(!e.isConnected) return; const to=Number(e.dataset.count), from=Number(e.dataset.from||0); e.textContent=money(from+(to-from)*p); });
@@ -912,6 +933,7 @@ async function authGo(){
   if(!sb){ a.msg='No hay conexión. Revisa tu internet y recarga la página.'; render(); return; }
   if(!/^\S+@\S+\.\S+$/.test(a.email)){ a.msg='Escribe un correo válido.'; render(); return; }
   if(a.modo!=='recuperar' && pw.length<8){ a.msg=a.modo==='registro'?'La contraseña debe tener al menos 8 caracteres.':'Escribe tu contraseña.'; render(); return; }
+  if(a.modo==='registro'){ const nk=((document.getElementById('au-n')||{}).value||'').trim().replace(/\s+/g,' '); a.nick=nk; if(!NICK_RE.test(nk)){ a.msg='Elige un nickname de entre 2 y 20 caracteres.'; render(); return; } UI.pendingNick=nk; }
   if(a.modo==='registro' && !document.getElementById('au-ok').checked){ a.msg='Marca la casilla para continuar.'; render(); return; }
   a.busy=true; render();
   try{
@@ -943,6 +965,7 @@ function act(a, el, ev){
   const ds=el.dataset;
   if(cmpAct(a, ds)) return;
   if(impAct(a)) return;
+  if(perfilAct(a)) return;
   switch(a){
     case 'tab': if(UI.imp&&UI.imp.url) URL.revokeObjectURL(UI.imp.url); UI.imp=null; UI.cmp=null; UI.cmpErr=''; UI.tab=ds.t; UI.animate=ds.t==='resumen'; UI.resetScroll=true; UI.confirmBorrar=false; render(); break;
     case 'mes': { UI.cmp=null; UI.cmpErr=''; let [y,m]=UI.ym.split('-').map(Number); m+=Number(ds.d); if(m<1){m=12;y--;} if(m>12){m=1;y++;} UI.ym=y+'-'+pad(m); UI.animate=UI.tab==='resumen'; UI.selDay=null; render(); break; }
@@ -1008,6 +1031,7 @@ document.addEventListener('input',e=>{
 });
 document.addEventListener('change',e=>{
   const el=e.target, k=el.dataset.cfg;
+  if(el.id==='av-in'){ const f=el.files&&el.files[0]; el.value=''; onFoto(f); return; }
   if(el.id==='img-in'){ const f=el.files&&el.files[0]; el.value=''; handleImg(f); return; }
   if(el.dataset.imp && UI.imp){ impInput(el); return; }
   if(el.id==='pdf-in'){ const f=el.files&&el.files[0]; el.value=''; handlePdf(f); return; }
@@ -1059,7 +1083,7 @@ const LIQ_RULES=[[/l[ií]quido/i,'liq'],[/total\s+haberes/i,'totHab'],[/total\s+
   [/haberes\s+no\s+imponibles/i,'noimpTot'],[/haberes\s+imponibles/i,'impTot'],[/imp\.?\s*prev|imp\.?\s*ces|base\s+tributable|^uf\b|tope|valor\s+uf/i,'skip'],
   [/nocturno\s+domingo|domingo\s+nocturno|nocturno\s+festivo/i,'noctDom'],[/nocturno/i,'noct'],[/domingo|festivo/i,'dom'],[/extra|sobretiempo/i,'extra'],
   [/gratificaci/i,'grat'],[/presentismo|movilizaci/i,'mov'],[/sueldo\s+base/i,'base'],
-  [/previ|afp/i,'afp'],[/salud|fonasa|isapre/i,'sal'],[/cesant/i,'ces'],[/impuesto/i,'impu'],
+  [/previ|afp/i,'afp'],[/salud|fonasa|isapre/i,'sal'],[/cesant/i,'ces'],[/impuesto/i,'otroDesc'],
   [/anticipo|pr[eé]stamo|cuota|descuento|sindicato|seguro|retenci/i,'otroDesc']];
 const R0 = () => ({ ym:'', horas:null, valorHora:null, afpPct:null, base:0, extra:0, hExtra:null, noct:0, hNoct:null, dom:0, hDom:null, noctDom:0, hNoctDom:null,
   grat:0, mov:0, otros:[], afp:0, sal:0, ces:0, impu:0, otrosDesc:[], liq:null, impTot:null, totHab:null, totDesc:null, n:0 });
@@ -1158,7 +1182,7 @@ function vReview(){
     </div><div class="colB">
       <section class="col gap6"><span class="set-t">Otros haberes (bonos, becas, diferencias)</span><div class="card">${lista(R.otros,'otros',true)}
         <button class="set-r c-purple" style="width:100%;border-left:0;border-right:0;border-bottom:0;background:none;font-weight:600" data-a="rvAdd" data-k="otros"><span>Agregar haber</span>${I.plus}</button></div></section>
-      <section class="col gap6"><span class="set-t">Descuentos</span><div class="card">${f('afp','AFP (cotización previsional)')}${f('sal','Salud')}${f('ces','Seguro de cesantía')}${f('impu','Impuesto único')}
+      <section class="col gap6"><span class="set-t">Descuentos</span><div class="card">${f('afp','AFP (cotización previsional)')}${f('sal','Salud')}${f('ces','Seguro de cesantía')}
         ${lista(R.otrosDesc,'otrosDesc',false)}
         <button class="set-r c-purple" style="width:100%;border-left:0;border-right:0;border-bottom:0;background:none;font-weight:600" data-a="rvAdd" data-k="otrosDesc"><span>Agregar otro descuento</span>${I.plus}</button></div></section>
       <section class="col gap6"><span class="set-t">Resultado</span><div class="card">${f('liq','Líquido a recibir')}
@@ -1183,7 +1207,7 @@ function cmpRows(ym){
     ['Presentismo / movilización',P.mov,R.mov,'hab',null],
     ['Total haberes',P.totHab,T.totHab,'tot',V],
     ['AFP',P.afp,R.afp,'desc'],['Salud',P.sal,R.sal,'desc'],['Seguro de cesantía',P.ces,R.ces,'desc'],
-    (R.impu||R.otrosDesc.length)?['Impuesto y otros descuentos',0,R.impu+R.otrosDesc.reduce((s,o)=>s+o.v,0),'desc']:null,
+    (R.impu||R.otrosDesc.length)?['Otros descuentos',0,R.impu+R.otrosDesc.reduce((s,o)=>s+o.v,0),'desc']:null,
     ['Total descuentos',P.desc,T.desc,'desc']
   ].filter(Boolean);
   return {P,R,T,rows,liqReal:R.liq!=null?R.liq:T.liq};
@@ -1216,10 +1240,7 @@ function diag(ym){
     if(!presOf(ym)) out.push(['info','Te pagaron presentismo, pero este mes tienes la casilla desmarcada.','pres',true]); }
   else if(!R.mov && presOf(ym)) out.push(['info','Este mes no te pagaron presentismo y tienes la casilla marcada.','pres',false]);
   const V=vh||c.valorHora;
-  [['noct','hNoct','rNoct','nocturno'],['dom','hDom','rDom','de domingo o festivo'],['noctDom','hNoctDom','rNoctDom','nocturno de domingo']].forEach(([a,h,k,n])=>{
-    if(R[a]>0 && R[h]>0){ const q=R[a]/(R[h]*V)*100; if(Math.abs(q-c[k])>1) out.push(['aviso',`Tu recargo ${n} equivale a ${f2(q)}% y tienes ${c[k]}%.`,k,Math.round(q)]); } });
   if(R.horas!=null && Math.abs(R.horas-P.hTot)>=0.5) out.push(['info',`Registraste ${fh(P.hTot)} y la liquidación indica ${fh(R.horas)} (${R.horas>P.hTot?'+':'−'}${hmTxt(R.horas-P.hTot)}). Puede faltar algún turno, o tus marcas y breaks reales fueron distintos.`]);
-  if(R.hNoct!=null && Math.abs(R.hNoct-P.hNoct)>=0.5) out.push(['info',`Horas nocturnas: Sueldito calculó ${fh(P.hNoct)} y la liquidación indica ${fh(R.hNoct)}.`]);
   R.otros.forEach(o=>{ const ws=o.n.toLowerCase().split(/[^a-záéíóúñ]+/).filter(w=>w.length>=4); if(!D.haberes.some(h=>{ const hn=h.nombre.toLowerCase(); return ws.some(w=>hn.includes(w)); })) out.push(['info',`Tu liquidación incluye “${o.n}” (${money(o.v)}). Si se repite cada mes, agrégalo en Ajustes → Otros haberes.`]); });
   return out;
 }
@@ -1228,7 +1249,7 @@ function vCmp(){
   const icon={error:'c-danger',aviso:'c-warn',info:'c-purple'};
   const fixTxt=(k,v)=>({valorHora:'Usar '+money(v),afpPct:'Usar '+String(v).replace('.',',')+'%',saludPct:'Usar '+String(v).replace('.',',')+'%',cesPct:'Usar '+String(v).replace('.',',')+'%',gratPct:'Usar '+String(v).replace('.',',')+'%',presPct:'Usar '+String(v).replace('.',',')+'%',rNoct:'Usar '+v+'%',rDom:'Usar '+v+'%',rNoctDom:'Usar '+v+'%',contrato:v==='plazo'?'Cambiar a plazo fijo':'Cambiar a indefinido',gratOn:v?'Activar':'Desactivar',pres:v?'Marcar':'Desmarcar'})[k];
   return `<div class="view"><div class="row gap8 full"><button class="icon-btn" style="width:44px;height:44px" data-a="cmpBack" aria-label="Volver">${I.prev}</button>
-      <div class="col grow"><h1 class="h1">Estimado vs. real</h1><span class="small muted">${ymLabel(ym)} · <span class="beta">BETA</span></span></div></div>
+      <div class="col grow"><h1 class="h1">ESTIMADO VS. REAL</h1><span class="small muted">${ymLabel(ym)} · <span class="beta">BETA</span></span></div></div>
     <div class="colA">
       <section class="hero" style="gap:10px"><span class="lbl">Tu líquido real fue</span>
         <span class="big" style="font-size:clamp(30px,9vw,40px);color:${Math.abs(d)<1?'var(--hero-ink)':(d>0?'var(--hero-green)':'#FF9C94')}">${Math.abs(d)<1?'igual al estimado':(d>0?'+':'−')+money(Math.abs(d))}</span>
@@ -1434,6 +1455,78 @@ function impAct(a){
   return false;
 }
 
+/* ================= Perfil: nickname y foto ================= */
+const NICK_RE=/^.{2,20}$/;
+function avatar(size, foto, nick){
+  foto = foto!==undefined ? foto : (D.perfil&&D.perfil.foto); nick = nick!==undefined ? nick : (D.perfil&&D.perfil.nick)||'';
+  const ini=(nick.trim()[0]||'?').toUpperCase();
+  return foto ? `<img src="${foto}" alt="" class="avatar" style="width:${size}px;height:${size}px">`
+    : `<span class="avatar" aria-hidden="true" style="width:${size}px;height:${size}px;font-size:${Math.round(size*0.42)}px">${esc(ini)}</span>`;
+}
+function perfilForm(primera){
+  const N=UI.nickDraft||{nick:'',foto:''};
+  return `<div class="col gap14" style="align-items:stretch">
+    <div class="col gap8" style="align-items:center">
+      <label for="av-in" class="avatar-pick" aria-label="Elegir foto de perfil">${avatar(104,N.foto,N.nick)}<span class="avatar-cam">${I.edit}</span></label>
+      <input type="file" id="av-in" accept="image/*" hidden>
+      ${N.foto?`<button class="label c-danger" style="border:0;background:none;min-height:32px" data-a="fotoQuitar">Quitar foto</button>`:`<span class="xs muted">Foto de perfil (opcional)</span>`}
+    </div>
+    <div class="field"><label class="label" for="nk-n">Nickname</label><input class="input" id="nk-n" maxlength="20" autocomplete="nickname" placeholder="Cómo quieres que te vean" value="${esc(N.nick)}"></div>
+    ${UI.nickErr?`<div class="note err" role="alert">${I.info}<span>${esc(UI.nickErr)}</span></div>`:''}
+    <button class="btn" style="height:52px" data-a="nickSave">${primera?'Continuar':'Guardar perfil'}</button>
+  </div>`;
+}
+function vNick(){
+  return `<main style="padding-top:40px;gap:18px"><div class="col gap8"><span class="label c-purple" style="letter-spacing:.6px">SUELDITO</span>
+    <h1 class="num" style="font-size:30px;letter-spacing:-.6px">Elige tu nickname</h1>
+    <span class="muted">Es el nombre que verán tus amigos cuando llegue esa función. Puedes cambiarlo cuando quieras en Ajustes.</span></div>
+    ${perfilForm(true)}</main>`;
+}
+function sheetPerfil(){
+  return `<div class="scrim" data-a="closeScrim"><div class="sheet" role="dialog" aria-modal="true" aria-label="Editar perfil">
+    <div class="row between"><h2 style="font-size:18px">Editar perfil</h2><button class="icon-btn" style="width:44px;height:44px" data-a="close" aria-label="Cerrar">${I.x}</button></div>
+    ${perfilForm(false)}</div></div>`;
+}
+async function fotoDesdeArchivo(file){
+  const url=URL.createObjectURL(file);
+  try{ const img=await loadImg(url), S=192, c=document.createElement('canvas'); c.width=c.height=S;
+    const m=Math.min(img.naturalWidth,img.naturalHeight), sx=(img.naturalWidth-m)/2, sy=(img.naturalHeight-m)/2;
+    c.getContext('2d').drawImage(img,sx,sy,m,m,0,0,S,S); return c.toDataURL('image/jpeg',0.82); }
+  finally{ URL.revokeObjectURL(url); }
+}
+function perfilAct(a){
+  switch(a){
+    case 'perfilEdit': UI.nickDraft={nick:(D.perfil&&D.perfil.nick)||'', foto:(D.perfil&&D.perfil.foto)||''}; UI.nickErr=''; UI.sheet={type:'perfil'}; renderSheet(); return true;
+    case 'fotoQuitar': { const n=document.getElementById('nk-n'); if(n) UI.nickDraft.nick=n.value; UI.nickDraft.foto=''; UI.step==='nick'?render():renderSheet(); return true; }
+    case 'nickSave': { const n=(document.getElementById('nk-n')||{}).value||''; const nick=n.trim().replace(/\s+/g,' ');
+      if(!NICK_RE.test(nick)){ UI.nickDraft.nick=nick; UI.nickErr='El nickname debe tener entre 2 y 20 caracteres.'; UI.step==='nick'?render():renderSheet(); return true; }
+      D.perfil={nick, foto:UI.nickDraft.foto||''}; save(); UI.nickErr='';
+      if(UI.step==='nick'){ UI.step = D.onboarded ? null : 'welcome'; UI.animate=true; render(); toast('¡Hola, '+nick+'!'); }
+      else { UI.sheet=null; render(); toast('Perfil actualizado'); }
+      return true; }
+  }
+  return false;
+}
+async function onFoto(file){
+  if(!file) return; const n=document.getElementById('nk-n'); if(n) UI.nickDraft.nick=n.value;
+  try{ UI.nickDraft.foto=await fotoDesdeArchivo(file); UI.nickErr=''; }catch(e){ UI.nickErr='No pudimos usar esa imagen. Prueba con otra.'; }
+  UI.step==='nick'?render():renderSheet();
+}
+/* ================= Celebración de turno cumplido ================= */
+function celebrate(list){
+  if(!list.length) return;
+  const total=list.reduce((s,sh)=>s+aporte(sh),0), n=list.length;
+  const old=document.getElementById('cele'); if(old) old.remove();
+  const el=document.createElement('div'); el.id='cele'; el.className='cele'; el.setAttribute('role','status');
+  el.innerHTML=`<div class="cele-card"><span class="cele-ic"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+    <span class="cele-t">${n===1?'¡Turno cumplido!':'¡'+n+' turnos cumplidos!'}</span>
+    <span class="cele-m num">+${money(total)}</span>
+    <span class="cele-s">${n===1?labelDia(bounds(list[0])[0])+' · '+list[0].e+' → '+list[0].s+' · ':''}ya está en tu Ganado</span>
+    <button class="cele-b" type="button">¡Genial!</button></div>`;
+  const close=()=>{ el.classList.add('out'); setTimeout(()=>el.remove(),300); };
+  el.addEventListener('click',close); document.body.appendChild(el); setTimeout(close,5000); confetti();
+}
+
 /* ================= Arranque ================= */
 function afterLoad(){
   const now=NOW(), last=D.lastSeen||0;
@@ -1443,11 +1536,10 @@ function afterLoad(){
     if(just.length){
       UI.earned=just.map(s=>s.id);
       UI.fromG=monthData(UI.ym,new Date(last)).ganado.liq;
-      setTimeout(()=>toast(just.length===1?'1 turno pasó a Ganado':just.length+' turnos pasaron a Ganado'),400);
+      setTimeout(()=>celebrate(just),600);
       const hs=D.cfg.horasSem;
       const completo=just.some(s=>{ const k=ymd(weekStart(bounds(s)[0])); const ws=D.shifts.filter(o=>ymd(weekStart(bounds(o)[0]))===k);
         return weekStats(ws,now,fer).g>=hs && weekStats(ws,new Date(last),fer).g<hs; });
-      if(completo) setTimeout(confetti,700);
       setTimeout(()=>{ UI.earned=[]; },2500);
     }
   }
@@ -1467,7 +1559,7 @@ function boot(){
   } else { UI.step='auth'; UI.auth.msg='No se pudo conectar. Revisa tu internet y recarga la página.'; render(); }
   setInterval(()=>{ if(UI.sheet||UI.step) return; const ae=document.activeElement; if(ae && /INPUT|SELECT/.test(ae.tagName)) return;
     const n=NOW(), l=D.lastSeen; const just=D.shifts.filter(s=>{ if(s.lic) return false; const b=bounds(s)[1].getTime(); return b>l && b<=n.getTime(); });
-    if(just.length){ UI.earned=just.map(s=>s.id); UI.fromG=monthData(UI.ym,new Date(l)).ganado.liq; UI.animate=true; toast('Un turno pasó a Ganado'); setTimeout(()=>{UI.earned=[];},2500); }
+    if(just.length){ UI.earned=just.map(s=>s.id); UI.fromG=monthData(UI.ym,new Date(l)).ganado.liq; UI.animate=true; celebrate(just); setTimeout(()=>{UI.earned=[];},2500); }
     D.lastSeen=n.getTime(); saveLocal(); render(); }, 60000);
   if(window.matchMedia){ const mq=matchMedia('(min-width: 900px)'), f=()=>{ if(!UI.sheet) render(); }; if(mq.addEventListener) mq.addEventListener('change',f); else if(mq.addListener) mq.addListener(f); }
   window.addEventListener('online',()=>{ if(USER) flush(); });
