@@ -1390,9 +1390,9 @@ function vImp(){
         <input type="date" id="imp-start" data-imp="start" value="${U.start}" style="width:150px;height:40px;border:1px solid var(--border2);border-radius:10px;background:var(--bg);padding:0 8px"></label>`:''}
       ${U.rows.map((r,i)=>`<div class="card pad col gap8" style="${r.inc?'':'opacity:.65'}">
         <div class="row between gap8"><label class="check" style="min-height:32px"><input type="checkbox" id="imp-inc-${i}" data-imp="inc:${i}" ${r.inc?'checked':''}><span class="label">Agregar este turno</span></label>${chip[impCheck(r)]}</div>
-        <div class="row gap8" style="flex-wrap:wrap"><input class="input" style="flex:1 1 150px;height:44px" type="date" id="imp-f-${i}" data-imp="f:${i}" value="${r.f}" aria-label="Fecha">
-          <input class="input num" style="flex:1 1 90px;height:44px" type="time" id="imp-e-${i}" data-imp="e:${i}" value="${r.e}" aria-label="Entrada">
-          <input class="input num" style="flex:1 1 90px;height:44px" type="time" id="imp-s-${i}" data-imp="s:${i}" value="${r.s}" aria-label="Salida"></div>
+        <div class="field"><label class="label" for="imp-f-${i}">Fecha</label><input class="input num" style="height:54px;font-size:19px;font-weight:600" type="date" id="imp-f-${i}" data-imp="f:${i}" value="${r.f}"></div>
+        <div class="grid2"><div class="field"><label class="label" for="imp-e-${i}">Entrada</label><input class="input num" style="height:50px;font-size:17px;font-weight:600;text-align:center" type="time" id="imp-e-${i}" data-imp="e:${i}" value="${r.e}"></div>
+          <div class="field"><label class="label" for="imp-s-${i}">Salida</label><input class="input num" style="height:50px;font-size:17px;font-weight:600;text-align:center" type="time" id="imp-s-${i}" data-imp="s:${i}" value="${r.s}"></div></div>
         ${r.f?`<span class="xs muted">${DIAL[dt(r.f).getDay()]} ${dt(r.f).getDate()} de ${MESES[dt(r.f).getMonth()].toLowerCase()}${r.s<=r.e?' · termina al día siguiente':''}</span>`:''}</div>`).join('')}
       <span class="small muted">El break se estima automáticamente, como en un turno nuevo. Puedes editarlo después en cada turno.</span>
       <button class="btn" style="height:52px" data-a="impSave" ${n?'':'disabled'}>Agregar ${n} turno${n===1?'':'s'}</button>
