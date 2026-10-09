@@ -16,6 +16,7 @@
 
 
 
+
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
 <style>
 /* Layout: app de una pantalla; contenido con scroll, barra de pestañas abajo, hojas inferiores para editar. */
@@ -342,7 +343,7 @@ async function startSession(user){
   if(RECOVERY) return;
   if(UI.pendingNick && !(D.perfil&&D.perfil.nick)){ D.perfil={nick:UI.pendingNick, foto:''}; save(); } UI.pendingNick='';
   applyTheme(); UI.step = !(D.perfil&&D.perfil.nick) ? 'nick' : (D.onboarded ? null : 'welcome'); if(UI.step==='nick'){ UI.nickDraft={nick:'',foto:''}; UI.nickErr=''; } UI.tab='resumen'; UI.animate=true;
-  afterLoad(); render(); syncPerfil();
+  UI.invCheck=true; afterLoad(); render(); syncPerfil();
 }
 async function refreshFromCloud(){
   if(!sb || !USER || UI.step || UI.sheet || flushing || hasPend()) return;
@@ -491,7 +492,7 @@ function validate(sh){
 const labelDia = d => DIA3[d.getDay()].toLowerCase()+' '+d.getDate()+' '+MES3[d.getMonth()];
 
 /* ================= Estado de interfaz ================= */
-const UI = { tab:'resumen', ym:ymOf(new Date()), vista:'lista', selDay:null, modo:'G', step:'loading', auth:{modo:'login',msg:'',ok:'',busy:false,email:''}, imp:null, am:{load:false,err:'',lista:[],coins:[],sel:null,msg:'',msgOk:false,busy:false,delConf:false,ok:false}, amOff:false, crop:null, nickDraft:null, nickErr:'', pendingNick:'', cmp:null, cmpBusy:false, cmpErr:'', cmpDelConf:false,
+const UI = { tab:'resumen', ym:ymOf(new Date()), vista:'lista', selDay:null, modo:'G', step:'loading', auth:{modo:'login',msg:'',ok:'',busy:false,email:''}, imp:null, am:{load:false,err:'',lista:[],coins:[],sel:null,msg:'',msgOk:false,busy:false,delConf:false,ok:false,prefill:'',inv:''}, amOff:false, crop:null, nickDraft:null, nickErr:'', pendingNick:'', cmp:null, cmpBusy:false, cmpErr:'', cmpDelConf:false,
   sheet:null, animate:true, earned:[], fromG:null, toast:null, cfgDraft:null, habForm:false, confirmBorrar:false, verFer:false };
 
 /* ================= Iconos ================= */
@@ -711,11 +712,12 @@ function vAjustes(){
 function vLoading(){ return `<main style="justify-content:center;align-items:center"><span class="label c-purple" style="letter-spacing:.6px">SUELDITO</span><span class="muted">Cargando tus datos…</span></main>`; }
 function vError(){ return `<main style="justify-content:center;gap:16px"><h1 class="h1">No pudimos cargar tus datos</h1><p class="muted">Necesitas conexión a internet la primera vez que entras en este dispositivo.</p><button class="btn" data-a="retry">Reintentar</button><button class="btn ghost" data-a="logout">Cerrar sesión</button></main>`; }
 function vAuth(){
-  const a=UI.auth, reg=a.modo==='registro', rec=a.modo==='recuperar';
+  const a=UI.auth, reg=a.modo==='registro', rec=a.modo==='recuperar', inv=leerInvitacion();
   return `<main style="padding-top:40px;gap:18px">
     <div class="col gap8"><span class="label c-purple" style="letter-spacing:.6px">SUELDITO</span>
       <h1 class="num" style="font-size:30px;letter-spacing:-.6px">${rec?'Recupera tu contraseña':(reg?'Crea tu cuenta':'Inicia sesión')}</h1>
       <span class="muted">${rec?'Te enviaremos un enlace para crear una contraseña nueva.':(reg?'Tus turnos y tu configuración quedan guardados en tu cuenta.':'Entra para ver tus turnos desde cualquier dispositivo.')}</span></div>
+    ${inv&&!rec?`<div class="note" style="background:var(--green-tint);color:var(--ink)">${I.info}<span>Te invitaron a SUELDITO (ID <b class="num">${esc(inv)}</b>). ${reg?'Crea tu cuenta':'Inicia sesión'} y luego podrán ser amigos y ver en qué turnos coinciden.</span></div>`:''}
     ${a.msg?`<div class="note err" role="alert">${I.info}<span>${esc(a.msg)}</span></div>`:''}
     ${a.ok?`<div class="note" role="status">${I.info}<span>${esc(a.ok)}</span></div>`:''}
     <div class="field"><label class="label" for="au-e">Correo</label><input class="input" id="au-e" type="email" autocomplete="email" inputmode="email" placeholder="tu@correo.com" value="${esc(a.email)}"></div>
@@ -847,6 +849,7 @@ function sheetAviso(){
 function applyTheme(){ const r=document.documentElement; if(D.cfg.tema==='auto'){ if(r.dataset.themeBy==='app'){ delete r.dataset.theme; delete r.dataset.themeBy; } } else { r.dataset.theme=D.cfg.tema; r.dataset.themeBy='app'; } }
 function render(){
   const app=document.getElementById('app'), sc=app.querySelector('main') ? app.querySelector('main').scrollTop : 0;
+  if(!UI.step && USER && UI.invCheck!==false){ UI.invCheck=false; aplicarInvitacion(); }
   app.dataset.mode = UI.step ? 'single' : 'app';
   if(UI.step==='loading'){ app.innerHTML=vLoading(); }
   else if(UI.step==='auth'){ app.innerHTML=vAuth(); }
@@ -1014,10 +1017,10 @@ function act(a, el, ev){
     case 'newPass': newPass(); break;
     case 'logout': logout(); break;
     case 'retry': if(USER) startSession(USER); break;
-    case 'demo': D.onboarded=true; ejemplo(); UI.step=null; UI.animate=true; render(); break;
+    case 'demo': UI.invCheck=true; D.onboarded=true; ejemplo(); UI.step=null; UI.animate=true; render(); break;
     case 'obSet': readOb(); UI.cfgDraft[ds.k]=ds.v; if(ds.k==='afp'){ const p=AFPS.find(x=>x[0]===ds.v); UI.cfgDraft.afpPct=Math.round((10+p[1])*100)/100; } render(); break;
     case 'obDone': { readOb(); const c=UI.cfgDraft; if(!(c.valorHora>0)||!(c.horasSem>0)){ toast('Indica tu valor hora y tus horas semanales.'); break; }
-      D.cfg={...c}; D.onboarded=true; save(); UI.step=null; UI.tab='turnos'; render(); toast('Listo. Agrega tu primer turno.'); break; }
+      D.cfg={...c}; D.onboarded=true; save(); UI.step=null; UI.tab='turnos'; UI.invCheck=true; render(); toast('Listo. Agrega tu primer turno.'); break; }
   }
 }
 function readOb(){ const a=document.getElementById('ob-vh'), b=document.getElementById('ob-hs'); if(a) UI.cfgDraft.valorHora=Number(a.value)||0; if(b) UI.cfgDraft.horasSem=Number(b.value)||0; }
@@ -1512,7 +1515,7 @@ function perfilAct(a){
     case 'nickSave': { const n=(document.getElementById('nk-n')||{}).value||''; const nick=n.trim().replace(/\s+/g,' ');
       if(!NICK_RE.test(nick)){ UI.nickDraft.nick=nick; UI.nickErr='El nickname debe tener entre 2 y 20 caracteres.'; UI.step==='nick'?render():renderSheet(); return true; }
       D.perfil={nick, foto:UI.nickDraft.foto||''}; save(); UI.nickErr=''; pushPerfil().then(()=>{ if(!UI.step && !UI.sheet) render(); });
-      if(UI.step==='nick'){ UI.step = D.onboarded ? null : 'welcome'; UI.animate=true; render(); toast('¡Hola, '+nick+'!'); }
+      if(UI.step==='nick'){ UI.invCheck=true; UI.step = D.onboarded ? null : 'welcome'; UI.animate=true; render(); toast('¡Hola, '+nick+'!'); }
       else { UI.sheet=null; render(); toast('Perfil actualizado'); }
       return true; }
   }
@@ -1559,8 +1562,28 @@ async function pushPerfil(){
 }
 function idChip(){
   return D.codigo ? `<div class="idchip"><span class="col" style="min-width:0"><span class="xs muted">Tu ID de amigo</span><span class="num" id="my-id" style="font-size:20px;font-weight:700;letter-spacing:2px;user-select:all">${esc(D.codigo)}</span></span>
-      <button class="btn ghost" style="width:auto;height:40px;padding:0 14px;font-size:14px" data-a="copyId"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>Copiar</button></div>`
+      <span class="row gap6" style="flex-wrap:wrap;justify-content:flex-end"><button class="btn ghost" style="width:auto;height:40px;padding:0 14px;font-size:14px" data-a="copyId"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>Copiar</button>
+      <button class="btn" style="width:auto;height:40px;padding:0 14px;font-size:14px" data-a="shareId"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>Compartir</button></span></div>`
     : `<div class="idchip"><span class="small muted">${UI.amOff?'Tu ID estará disponible cuando se active la función de amigos.':'Generando tu ID…'}</span></div>`;
+}
+const inviteURL = () => location.origin + location.pathname + '?amigo=' + encodeURIComponent(D.codigo);
+const inviteText = () => `¡Hola! Estoy usando SUELDITO para ordenar mis turnos y mi sueldo. Agrégame como amigo para conectar y ver en qué turnos coincidimos. Mi ID es ${D.codigo}.`;
+function shareId(){
+  const url=inviteURL(), text=inviteText(), full=text+' '+url;
+  const copiar=()=>{ try{ navigator.clipboard.writeText(full).then(()=>toast('Mensaje copiado: pégalo donde quieras'),()=>toast('No se pudo copiar el mensaje')); }catch(e){ toast('No se pudo copiar el mensaje'); } };
+  if(navigator.share){ navigator.share({title:'SUELDITO', text, url}).catch(e=>{ if(e && e.name!=='AbortError') copiar(); }); }
+  else copiar();
+}
+const INV_KEY='sueldito.invitacion';
+function leerInvitacion(){
+  try{ const q=new URLSearchParams(location.search), c=(q.get('amigo')||'').trim().toUpperCase();
+    if(/^[A-Z0-9]{6}$/.test(c)){ localStorage.setItem(INV_KEY,c); q.delete('amigo'); const rest=q.toString(); history.replaceState(null,'',location.pathname+(rest?'?'+rest:'')+location.hash); } }catch(e){}
+  try{ return localStorage.getItem(INV_KEY)||''; }catch(e){ return ''; }
+}
+function aplicarInvitacion(){
+  const c=leerInvitacion(); if(!c || UI.step || !USER) return false;
+  try{ localStorage.removeItem(INV_KEY); }catch(e){}
+  UI.tab='amigos'; UI.cmp=null; UI.imp=null; UI.am.sel=null; UI.am.prefill=c; UI.am.inv=c; UI.am.msg=''; UI.resetScroll=true; loadAmigos(); return true;
 }
 function copyId(){
   const done=()=>toast('ID copiado');
@@ -1621,9 +1644,10 @@ function vAmigos(){
     <div class="colA">
       ${A.err?`<div class="note err" role="alert">${I.info}<span>${esc(A.err)}</span></div>`:''}
       <div class="note">${I.info}<span>Tus amigos sólo ven tu nick, tu foto y las horas en que sus turnos coinciden con los tuyos. <b>Nunca ven tu dinero, tu sueldo ni tu configuración.</b></span></div>
+      ${A.inv?`<div class="note" style="background:var(--green-tint);color:var(--ink)">${I.info}<span>Te invitaron con el ID <b class="num">${esc(A.inv)}</b>. Presiona <b>Enviar</b> para mandarle tu solicitud de amistad.</span></div>`:''}
       ${idChip()}
       <section class="card pad col gap10"><label class="label" for="am-id">Agregar amigo</label>
-        <div class="row gap8"><input class="input num" id="am-id" maxlength="8" placeholder="ID de tu amigo" autocapitalize="characters" autocomplete="off" style="text-transform:uppercase;letter-spacing:2px;flex:1">
+        <div class="row gap8"><input class="input num" id="am-id" maxlength="8" value="${esc(A.prefill||'')}" placeholder="ID de tu amigo" autocapitalize="characters" autocomplete="off" style="text-transform:uppercase;letter-spacing:2px;flex:1">
         <button class="btn" style="width:auto;padding:0 16px" data-a="amAdd" ${A.busy?'disabled':''}>Enviar</button></div>
         ${A.msg?`<span class="small ${A.msgOk?'c-green':'c-danger'}" role="status" style="font-weight:600">${esc(A.msg)}</span>`:`<span class="xs muted">Pídele su ID: lo encuentra en Amigos o en su perfil.</span>`}</section>
       ${recib.length?`<section class="col gap6"><span class="set-t">Solicitudes recibidas · ${recib.length}</span><div class="card">${recib.map(x=>persona(x,`<span class="row gap6"><button class="btn ghost" style="width:auto;height:38px;padding:0 12px;font-size:13px" data-a="amRej" data-id="${x.id}">Rechazar</button><button class="btn" style="width:auto;height:38px;padding:0 12px;font-size:13px" data-a="amAcc" data-id="${x.id}">Aceptar</button></span>`)).join('')}</div></section>`:''}
@@ -1663,7 +1687,8 @@ async function amRpc(fn,args,okMsg){
 function amigosAct(a, ds){
   switch(a){
     case 'copyId': copyId(); return true;
-    case 'amAdd': { const v=((document.getElementById('am-id')||{}).value||'').trim().toUpperCase();
+    case 'shareId': shareId(); return true;
+    case 'amAdd': { UI.am.inv=''; UI.am.prefill=''; const v=((document.getElementById('am-id')||{}).value||'').trim().toUpperCase();
       if(!/^[A-Z0-9]{6}$/.test(v)){ UI.am.msg='El ID tiene 6 letras o números.'; UI.am.msgOk=false; render(); return true; }
       UI.am.busy=true; render();
       sb.rpc('enviar_solicitud',{codigo_amigo:v}).then(({data,error})=>{ UI.am.busy=false;
@@ -1701,6 +1726,7 @@ function afterLoad(){
   D.lastSeen=now.getTime(); saveLocal();
 }
 function boot(){
+  if(leerInvitacion()) UI.auth.modo='registro';
   applyTheme(); render();
   RECOVERY = /type=recovery/.test(location.hash||'');
   if(window.supabase && supabase.createClient){
