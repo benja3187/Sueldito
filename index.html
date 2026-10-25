@@ -6,8 +6,14 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#24174F">
+<meta name="apple-mobile-web-app-title" content="SUELDITO">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
 <title>Sueldito</title>
 <style>:root{padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px);box-sizing:border-box}[hidden]{display:none!important}</style>
+
+
 
 
 
@@ -253,6 +259,7 @@ svg.avatar{display:block;border-radius:999px}
 .tu-skip{border:0;background:none;color:var(--muted);font-weight:600;font-size:13px;min-height:32px;padding:0 4px}
 .tu-b{height:44px;width:auto;padding:0 16px;font-size:14px}
 .tu-prog{flex:1;max-width:120px;height:4px;border-radius:9px;background:var(--surf2);overflow:hidden}.tu-prog i{display:block;height:100%;background:var(--purple);border-radius:9px}
+.ico-in{display:inline-flex;vertical-align:-3px;color:var(--purple)}
 .beta{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.6px;padding:2px 8px;border-radius:999px;background:var(--warn-tint);color:var(--warn);vertical-align:middle;line-height:1.5}
 .cmp-head{display:grid;grid-template-columns:minmax(0,1fr) 116px minmax(0,1fr);font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;padding-bottom:6px}
 .cmp{position:relative;display:flex;flex-direction:column}
@@ -348,7 +355,7 @@ const SB_URL = 'https://ffmpdtozmarlmnauiuvf.supabase.co';
 const SB_KEY = 'sb_publishable_LxBezHj77R3yeCDHgu4otg_YxGdMWCR';
 const LEGACY_KEY = 'sueldito.v1';
 let sb = null, USER = null, KEY = null, mem = null, RECOVERY = false;
-const blank = () => ({ v:2, onboarded:false, cfg:{...CFG0}, shifts:[], pres:{}, haberes:[], ferOff:[], ferExtra:[], demoIds:[], lastSeen:0, ejemplo:false, reales:{}, perfil:{nick:'',foto:''}, vac:[], tuto:false, recordatorio:null, pend:{cfg:false,up:[],del:[]} });
+const blank = () => ({ v:2, onboarded:false, cfg:{...CFG0}, shifts:[], pres:{}, haberes:[], ferOff:[], ferExtra:[], demoIds:[], lastSeen:0, ejemplo:false, reales:{}, perfil:{nick:'',foto:''}, vac:[], tuto:false, recordatorio:null, pushTipos:null, pend:{cfg:false,up:[],del:[]} });
 function fix(d){ const b=blank(); d={...b,...d}; d.cfg={...CFG0,...d.cfg}; d.pend={...b.pend,...(d.pend||{})}; return d; }
 function lsGet(k){ try{ const t=localStorage.getItem(k); if(t) return JSON.parse(t); }catch(e){} return null; }
 function saveLocal(){ mem=D; if(!KEY) return; try{ localStorage.setItem(KEY, JSON.stringify(D)); }catch(e){} }
@@ -590,6 +597,9 @@ const UI = { tab:'resumen', ym:ymOf(new Date()), vista:'lista', selDay:null, mod
 
 /* ================= Iconos ================= */
 const I = {
+  bell:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg>',
+  shareIos:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M8 7l4-4 4 4"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg>',
+  plusSq:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M12 8v8M8 12h8"/></svg>',
   sun:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
   eye:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',
   eyeOff:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.6 5.1A10.7 10.7 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-2.7 3.6M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7a9.7 9.7 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2M3 3l18 18"/></svg>',
@@ -644,6 +654,7 @@ function vResumen(){
   return `<div class="view"><div class="row between gap8 full">
     <div class="row gap12" style="min-width:0"><button class="avatar-btn" data-a="perfilEdit" aria-label="Editar perfil">${avatar(48)}</button><div class="col" style="gap:2px;min-width:0"><span class="small muted" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Hola, ${esc((D.perfil&&D.perfil.nick)||'')}</span><h1 class="h1" style="white-space:nowrap">Mi sueldo</h1></div></div><span class="small muted" style="text-align:right">Hoy<br>${labelDia(now)}, ${hm(now)}</span></div>
     <div class="row full">${monthPill()}</div><div class="colA">
+  ${pwaCard()}
   ${D.ejemplo?`<div class="note"><span class="grow"><b>Datos de ejemplo.</b> Estos turnos no son tuyos: sirven para probar.</span><button class="tag c-purple" style="border:0;min-height:32px" data-a="borrarEjemplo">Quitar</button></div>`:''}
   <section class="hero">
     <div class="row between"><span class="lbl">Líquido proyectado del mes · aprox.</span><span class="row gap8"><button class="info" data-a="ver" aria-pressed="${VER}" aria-label="${VER?'Ocultar montos':'Mostrar montos'}">${VER?I.eyeOff:I.eye}</button><button class="info" data-a="aviso" aria-label="Por qué es aproximado">${I.info}</button></span></div>
@@ -806,6 +817,7 @@ function vAjustes(){
     <div style="padding:0 14px 12px">${idChip()}</div>
     <div class="set-r"><span class="col" style="min-width:0"><span style="overflow-wrap:anywhere">${USER?esc(USER.email||''):'Sin sesión'}</span><span class="xs muted" id="sync-st">${syncText()}</span></span></div>
     <button class="set-r c-purple" style="width:100%;border-left:0;border-right:0;border-bottom:0;background:none;font-weight:600" data-a="logout"><span>Cerrar sesión</span>${I.arrow}</button></div></section>
+  ${ajustesNotif()}
   <section class="col gap6" id="aj-rec"><span class="set-t">Recordatorios y ayuda</span><div class="card">
     <label class="set-r"><span class="col" style="min-width:0"><span>Recordatorio por correo</span><span class="xs muted">Los jueves a las 12:00, solo si aún no tienes turnos para la semana siguiente.</span></span><input type="checkbox" id="cfg-rec" data-a="recToggle" ${D.recordatorio?'checked':''} style="width:22px;height:22px;accent-color:var(--purple);flex-shrink:0"></label>
     <button class="set-r c-purple" style="width:100%;border-left:0;border-right:0;border-bottom:0;background:none;font-weight:600" data-a="tutoStart"><span>Ver el tutorial de nuevo</span>${I.arrow}</button></div></section>
@@ -1008,7 +1020,9 @@ function render(){
     bindSwipes(); runAnim();
     if(!UI.tuto && USER && !D.tuto && !UI.sheet && !UI.imp && !UI.cmp){ UI.tuto={i:0}; }
     if(!UI.tuto && USER && UI.nuevoCheck!==false){ UI.nuevoCheck=false; let nv=false; try{ nv=sessionStorage.getItem('sueldito.nuevo')==='1'; sessionStorage.removeItem('sueldito.nuevo'); }catch(e){}
-      if(nv){ UI.tab='turnos'; setTimeout(()=>{ render(); openNew(); },0); } }
+      if(nv){ UI.tab='turnos'; setTimeout(()=>{ render(); openNew(); },0); }
+      let ir=null; try{ ir=sessionStorage.getItem('sueldito.ir'); sessionStorage.removeItem('sueldito.ir'); }catch(e){}
+      if(ir && !nv){ UI.tab=ir; UI.resetScroll=true; if(ir==='amigos') loadAmigos(); setTimeout(render,0); } }
     if(UI.tuto) requestAnimationFrame(renderTuto);
   }
   renderSheet(); renderToast(); bindCrop();
@@ -1020,7 +1034,7 @@ function renderSheet(){
   if(!UI.sheet){ if(!cur) return; if(!cur.classList.contains('closing')){ cur.classList.add('closing'); cur.setAttribute('aria-hidden','true'); }
     sheetT=setTimeout(()=>{ if(!UI.sheet) el.innerHTML=''; },230); return; }
   const open=cur && !cur.classList.contains('closing'), prev=el.querySelector('.sheet'), top=prev?prev.scrollTop:0;
-  el.innerHTML = UI.sheet.type==='shift' ? sheetShift() : UI.sheet.type==='perfil' ? sheetPerfil() : UI.sheet.type==='vac' ? sheetVac() : sheetAviso();
+  el.innerHTML = UI.sheet.type==='shift' ? sheetShift() : UI.sheet.type==='perfil' ? sheetPerfil() : UI.sheet.type==='vac' ? sheetVac() : UI.sheet.type==='instalar' ? sheetInstalar() : sheetAviso();
   if(open){ const sc=el.querySelector('.scrim'), sh=el.querySelector('.sheet'); if(sc) sc.classList.add('stay'); if(sh) sh.scrollTop=top; }
   if(UI.sheet && UI.sheet.type==='shift') previewShift();
   if(UI.sheet && UI.sheet.type==='perfil') bindCrop();
@@ -1123,6 +1137,7 @@ async function newPass(){
 async function logout(){
   if(hasPend()) await flush();
   const k=KEY, pend=hasPend();
+  try{ await pushOff(true); }catch(e){}
   try{ if(sb) await sb.auth.signOut(); }catch(e){}
   if(!pend && k){ try{ localStorage.removeItem(k); }catch(e){} }
   USER=null; KEY=null; D=blank(); UI.am={load:false,err:'',lista:[],coins:[],sel:null,msg:'',msgOk:false,busy:false,delConf:false,ok:false}; UI.auth={modo:'login',msg:'',ok:'',busy:false,email:''}; UI.step='auth'; UI.sheet=null; applyTheme(); render();
@@ -1145,6 +1160,12 @@ function act(a, el, ev){
     case 'pwToggle': { const i=document.getElementById(ds.for); if(!i) break; const show=i.type==='password'; i.type=show?'text':'password'; el.setAttribute('aria-pressed',show); el.setAttribute('aria-label',show?'Ocultar contraseña':'Mostrar contraseña'); el.innerHTML=show?I.eyeOff:I.eye; i.focus({preventScroll:true}); try{ const n=i.value.length; i.setSelectionRange(n,n); }catch(e){} break; }
     case 'nuevo': openNew(ds.f); break;
     case 'tutoStart': tutoStart(); break;
+    case 'pwaInstalar': if(PWA.prompt){ const p=PWA.prompt; PWA.prompt=null; p.prompt(); p.userChoice.then(r=>{ if(r&&r.outcome==='accepted') PWA.standalone=true; render(); }).catch(()=>{}); } else { UI.sheet={type:'instalar'}; renderSheet(); } break;
+    case 'pwaNo': lsMarca('sueldito.noInstalar'); render(); break;
+    case 'pushNo': lsMarca('sueldito.noPush'); render(); break;
+    case 'pushOn': pushOn(); break;
+    case 'pushOff': pushOff(); break;
+    case 'pushTipo': setTipos(ds.k, el.checked); break;
     case 'tutoNext': tutoGo(UI.tuto.i+1); break;
     case 'tutoPrev': tutoGo(UI.tuto.i-1); break;
     case 'tutoSkip': tutoGo(TUTO.length-1); break;
@@ -2125,12 +2146,86 @@ function renderTuto(){
 }
 addEventListener('resize',()=>{ if(UI.tuto) renderTuto(); });
 addEventListener('keydown',e=>{ if(!UI.tuto) return; if(e.key==='Escape'){ e.preventDefault(); tutoGo(TUTO.length-1); } else if(e.key==='ArrowRight' && !TUTO[UI.tuto.i].fin){ tutoGo(UI.tuto.i+1); } else if(e.key==='ArrowLeft'){ tutoGo(UI.tuto.i-1); } });
-async function loadPref(){ if(!sb||!USER) return; try{ const {data,error}=await sb.from('preferencias').select('recordatorio').maybeSingle(); if(!error && data){ D.recordatorio=!!data.recordatorio; saveLocal(); if(UI.tab==='ajustes'&&!UI.step) render(); } }catch(e){} }
+async function loadPref(){ if(!sb||!USER) return; try{ const {data,error}=await sb.from('preferencias').select('recordatorio, push_tipos').maybeSingle(); if(!error && data){ D.recordatorio=!!data.recordatorio; if(data.push_tipos) D.pushTipos=data.push_tipos; saveLocal(); if(UI.tab==='ajustes'&&!UI.step) render(); } }catch(e){} if(PWA.sub) pushRegistrar(PWA.sub,true).catch(()=>{}); }
 async function setPref(v){ D.recordatorio=!!v; save(); if(!sb||!USER) return;
   try{ const {error}=await sb.from('preferencias').upsert({user_id:USER.id, recordatorio:!!v, updated_at:new Date().toISOString()}); if(error) throw error; }
   catch(e){ console.warn('Sueldito: preferencia', e); toast('No pudimos guardar el recordatorio. Inténtalo de nuevo más tarde.'); } }
-function leerNuevo(){ try{ const q=new URLSearchParams(location.search); if(q.get('nuevo')){ sessionStorage.setItem('sueldito.nuevo','1'); q.delete('nuevo'); const qs=q.toString(); history.replaceState(null,'',location.pathname+(qs?'?'+qs:'')+location.hash); } }catch(e){} }
+function leerNuevo(){ try{ const q=new URLSearchParams(location.search); let cambio=false;
+  if(q.get('nuevo')){ sessionStorage.setItem('sueldito.nuevo','1'); q.delete('nuevo'); cambio=true; }
+  const ir=q.get('ir'); if(ir){ if(['resumen','turnos','amigos','liq','ajustes'].includes(ir)) sessionStorage.setItem('sueldito.ir',ir); q.delete('ir'); cambio=true; }
+  if(q.has('app')){ q.delete('app'); cambio=true; }
+  if(cambio){ const qs=q.toString(); history.replaceState(null,'',location.pathname+(qs?'?'+qs:'')+location.hash); } }catch(e){} }
+/* ================= App instalable y notificaciones push ================= */
+const VAPID_PUB='BEENTZUw4czzgEKX8ogVhGJgyQYsuZOakcCd2oFCDrXSPExj2R8GBt0Is4n_wFWyml9_W6ynDyuaRiIC347xn7Q';
+const PWA={ prompt:null, reg:null, sub:null,
+  standalone: (()=>{ try{ return matchMedia('(display-mode: standalone)').matches || navigator.standalone===true; }catch(e){ return false; } })(),
+  ios: /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1),
+  movil: (()=>{ try{ return matchMedia('(pointer: coarse)').matches; }catch(e){ return false; } })(),
+  soporta: 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window };
+const TIPOS_PUSH=[['turno','Al terminar un turno','“¡Turno cumplido!”, sin montos'],['jueves','Jueves a las 12:00','Si te faltan los turnos de la próxima semana'],['mes','Quinto día hábil del mes','Para comparar con tu liquidación'],['amigos','Solicitudes de amistad','Cuando alguien quiere agregarte']];
+const pushTipos = () => ({jueves:true,turno:true,mes:true,amigos:true,...(D.pushTipos||{})});
+const pushActivo = () => !!PWA.sub && (typeof Notification!=='undefined' && Notification.permission==='granted');
+const pushPuede = () => PWA.soporta && !(PWA.ios && !PWA.standalone);
+function lsTiempo(k){ try{ return Number(localStorage.getItem(k))||0; }catch(e){ return 0; } }
+function lsMarca(k){ try{ localStorage.setItem(k,String(Date.now())); }catch(e){} }
+addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); PWA.prompt=e; if(!UI.step && !UI.sheet) render(); });
+addEventListener('appinstalled',()=>{ PWA.prompt=null; PWA.standalone=true; if(!UI.step){ render(); toast('SUELDITO quedó instalado en tu teléfono'); } });
+async function swInit(){
+  if(!('serviceWorker' in navigator) || !(location.protocol==='https:' || location.hostname==='localhost')) return;
+  try{ PWA.reg=await navigator.serviceWorker.register('/sw.js'); PWA.sub=await PWA.reg.pushManager.getSubscription(); if(USER && PWA.sub) pushRegistrar(PWA.sub,true).catch(()=>{}); if(!UI.step && !UI.sheet) render(); }catch(e){ console.warn('Sueldito: service worker', e); }
+}
+function b64uBytes(s){ s=s.replace(/-/g,'+').replace(/_/g,'/'); while(s.length%4) s+='='; const b=atob(s); return Uint8Array.from(b,c=>c.charCodeAt(0)); }
+async function pushRegistrar(sub, silencio){ const j=sub.toJSON(); const {error}=await sb.rpc('registrar_push',{endpoint:j.endpoint,p256dh:j.keys.p256dh,auth:j.keys.auth}); if(error && !silencio) throw error; }
+async function pushOn(){
+  if(!PWA.soporta){ toast('Este navegador no permite notificaciones.'); return; }
+  if(PWA.ios && !PWA.standalone){ UI.sheet={type:'instalar'}; renderSheet(); return; }
+  let perm='default'; try{ perm=await Notification.requestPermission(); }catch(e){}
+  if(perm!=='granted'){ render(); toast(perm==='denied'?'Bloqueaste las notificaciones. Actívalas en los ajustes del teléfono para SUELDITO.':'No se activaron las notificaciones.'); return; }
+  try{ const reg=PWA.reg||await navigator.serviceWorker.ready;
+    const sub=(await reg.pushManager.getSubscription()) || await reg.pushManager.subscribe({userVisibleOnly:true, applicationServerKey:b64uBytes(VAPID_PUB)});
+    await pushRegistrar(sub); PWA.sub=sub; render(); toast('Listo. Te avisaremos en este teléfono.');
+    try{ reg.showNotification('Notificaciones activadas',{body:'Así se verán los avisos de SUELDITO.',icon:'/icons/icon-192.png',badge:'/icons/badge-96.png',tag:'prueba'}); }catch(e){}
+  }catch(e){ console.warn('Sueldito: push', e); render(); toast('No pudimos activar las notificaciones. Inténtalo de nuevo.'); }
+}
+async function pushOff(silencio){ const sub=PWA.sub; if(!sub) return; PWA.sub=null;
+  try{ if(sb&&USER) await sb.from('push_suscripciones').delete().eq('endpoint',sub.endpoint); }catch(e){}
+  try{ await sub.unsubscribe(); }catch(e){}
+  if(!silencio){ render(); toast('Notificaciones desactivadas en este teléfono'); } }
+async function setTipos(k,v){ D.pushTipos={...pushTipos(),[k]:!!v}; save(); if(!sb||!USER) return;
+  try{ const {error}=await sb.from('preferencias').upsert({user_id:USER.id, push_tipos:D.pushTipos, updated_at:new Date().toISOString()}); if(error) throw error; }
+  catch(e){ console.warn('Sueldito: preferencia push', e); toast('No pudimos guardar el cambio. Inténtalo de nuevo.'); } }
+function pwaCard(){
+  const DIAS14=14*864e5;
+  if(PWA.movil && !PWA.standalone && Date.now()-lsTiempo('sueldito.noInstalar')>DIAS14)
+    return `<section class="card pad col gap10" id="pwa-card"><div class="row gap12"><img src="/icons/icon-192.png" alt="" width="44" height="44" style="border-radius:12px;flex-shrink:0"><span class="col" style="gap:2px"><b style="font-size:15px">Instala SUELDITO en tu teléfono</b><span class="small muted">Ábrela como una app y recibe avisos de tus turnos.</span></span></div>
+      <div class="grid2"><button class="btn ghost" data-a="pwaNo">Ahora no</button><button class="btn" data-a="pwaInstalar">Instalar</button></div></section>`;
+  if(pushPuede() && !pushActivo() && !(typeof Notification!=='undefined' && Notification.permission==='denied') && Date.now()-lsTiempo('sueldito.noPush')>DIAS14)
+    return `<section class="card pad col gap10" id="pwa-card"><div class="row gap12"><span class="badge b-A" style="width:44px;height:44px">${I.bell}</span><span class="col" style="gap:2px"><b style="font-size:15px">Activa las notificaciones</b><span class="small muted">Te avisamos al terminar cada turno, los jueves si te faltan turnos y cuando llegue tu liquidación.</span></span></div>
+      <div class="grid2"><button class="btn ghost" data-a="pushNo">Ahora no</button><button class="btn" data-a="pushOn">Activar</button></div></section>`;
+  return '';
+}
+function ajustesNotif(){
+  const den=typeof Notification!=='undefined' && Notification.permission==='denied', act=pushActivo(), t=pushTipos();
+  const estado = !PWA.soporta ? 'Este navegador no permite notificaciones.' : (PWA.ios && !PWA.standalone) ? 'En iPhone, primero instala SUELDITO en tu pantalla de inicio.' : den ? 'Están bloqueadas. Actívalas en los ajustes del teléfono para SUELDITO.' : act ? 'Activadas en este teléfono. Nunca muestran montos.' : 'Desactivadas en este teléfono.';
+  return `<section class="col gap6" id="aj-notif"><span class="set-t">App y notificaciones</span><div class="card">
+    <div class="set-r"><span class="col" style="min-width:0"><span>App en tu pantalla de inicio</span><span class="xs muted">${PWA.standalone?'Ya la estás usando como app.':'Se abre como app, sin la barra del navegador.'}</span></span>${PWA.standalone?`<span class="tag c-green">Instalada</span>`:`<button class="tag c-purple" style="border:0;min-height:36px;padding:0 12px" data-a="pwaInstalar">Instalar</button>`}</div>
+    <label class="set-r"><span class="col" style="min-width:0"><span>Notificaciones push</span><span class="xs muted">${estado}</span></span><input type="checkbox" id="push-on" data-a="${act?'pushOff':'pushOn'}" ${act?'checked':''} ${!PWA.soporta||den?'disabled':''} style="width:22px;height:22px;accent-color:var(--purple);flex-shrink:0"></label>
+    ${act?TIPOS_PUSH.map(([k,l,sub])=>`<label class="set-r" style="padding-left:28px"><span class="col" style="min-width:0"><span>${l}</span><span class="xs muted">${sub}</span></span><input type="checkbox" data-a="pushTipo" data-k="${k}" ${t[k]?'checked':''} style="width:20px;height:20px;accent-color:var(--purple);flex-shrink:0"></label>`).join(''):''}
+  </div></section>`;
+}
+function sheetInstalar(){
+  const ios=PWA.ios;
+  const paso=(n,t)=>`<div class="row gap12" style="align-items:flex-start"><span class="badge b-A" style="width:32px;height:32px"><b>${n}</b></span><span style="padding-top:5px">${t}</span></div>`;
+  return `<div class="scrim" data-a="closeScrim"><div class="sheet" role="dialog" aria-modal="true" aria-label="Instalar SUELDITO">
+    <div class="row between"><h2 style="font-size:18px">Instala SUELDITO</h2><button class="icon-btn" style="width:44px;height:44px" data-a="close" aria-label="Cerrar">${I.x}</button></div>
+    <div class="card pad col gap14">${ios
+      ? paso(1,'Abre esta página en <b>Safari</b>.')+paso(2,`Toca <b>Compartir</b> <span class="ico-in">${I.shareIos}</span> en la barra de abajo.`)+paso(3,`Elige <b>Agregar a inicio</b> <span class="ico-in">${I.plusSq}</span> y luego <b>Agregar</b>.`)+paso(4,'Abre SUELDITO desde su ícono y activa las notificaciones en Ajustes.')
+      : paso(1,'Toca el menú <b>⋮</b> de Chrome, arriba a la derecha.')+paso(2,'Elige <b>Instalar app</b> o <b>Agregar a pantalla de inicio</b>.')+paso(3,'Abre SUELDITO desde su ícono y activa las notificaciones.')}</div>
+    ${ios?'<span class="small muted">Las notificaciones en iPhone necesitan iOS 16.4 o más nuevo y que SUELDITO esté en tu pantalla de inicio.</span>':''}
+    <button class="btn" data-a="close">Entendido</button></div></div>`;
+}
 function boot(){
+  swInit();
   leerNuevo();
   if(leerInvitacion()) UI.auth.modo='registro';
   applyTheme(); render();
