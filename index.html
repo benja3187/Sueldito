@@ -29,6 +29,7 @@
 
 
 
+
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
 <style>
 /* Layout: app de una pantalla; contenido con scroll, barra de pestañas abajo, hojas inferiores para editar. */
@@ -401,6 +402,11 @@ function adoptRemote(r){ const keep={lastSeen:D.lastSeen, codigo:D.codigo}; D=fi
 async function startSession(user){
   if(RECOVERY) return;
   USER=user; KEY='sueldito.v2.'+user.id; UI.step='loading'; render();
+  UI.admin=false; clearInterval(UI.esperaT);
+  try{ const {data:est,error:ee}=await sb.rpc('mi_estado'); if(!ee){ if(est==='admin') UI.admin=true;
+    else if(est==='pendiente'||est==='rechazado'){ UI.estado=est; UI.step='espera'; render();
+      UI.esperaT=setInterval(async()=>{ if(UI.step!=='espera'||!USER) return clearInterval(UI.esperaT); const {data:e2}=await sb.rpc('mi_estado'); if(e2==='aprobado'||e2==='admin'){ clearInterval(UI.esperaT); startSession(USER); } else if(e2!==UI.estado){ UI.estado=e2; render(); } },30000);
+      return; } } }catch(e){}
   const local=lsGet(KEY); D = local ? fix(local) : blank();
   let online=true;
   try{
@@ -420,9 +426,10 @@ async function startSession(user){
     if(!local){ UI.step='error'; render(); return; }
     setSync('pendiente'); setTimeout(()=>toast('Sin conexión. Mostrando lo guardado en este teléfono.'),500); }
   if(RECOVERY) return;
+  if(!UI.pendingNick && user.user_metadata && user.user_metadata.nick) UI.pendingNick=String(user.user_metadata.nick).slice(0,20);
   if(UI.pendingNick && !(D.perfil&&D.perfil.nick)){ D.perfil={nick:UI.pendingNick, foto:''}; save(); } UI.pendingNick='';
   applyTheme(); UI.step = !(D.perfil&&D.perfil.nick) ? 'nick' : (D.onboarded ? null : 'welcome'); if(UI.step==='nick'){ UI.nickDraft={nick:'',foto:''}; UI.nickErr=''; } UI.tab='resumen'; UI.animate=true;
-  UI.invCheck=true; UI.nuevoCheck=true; afterLoad(); render(); syncPerfil(); loadPref();
+  UI.invCheck=true; UI.nuevoCheck=true; afterLoad(); render(); syncPerfil(); loadPref(); if(UI.admin) loadAdmin();
 }
 async function refreshFromCloud(){
   if(!sb || !USER || UI.step || UI.sheet || flushing || hasPend()) return;
@@ -654,7 +661,7 @@ function vResumen(){
   return `<div class="view"><div class="row between gap8 full">
     <div class="row gap12" style="min-width:0"><button class="avatar-btn" data-a="perfilEdit" aria-label="Editar perfil">${avatar(48)}</button><div class="col" style="gap:2px;min-width:0"><span class="small muted" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Hola, ${esc((D.perfil&&D.perfil.nick)||'')}</span><h1 class="h1" style="white-space:nowrap">Mi sueldo</h1></div></div><span class="small muted" style="text-align:right">Hoy<br>${labelDia(now)}, ${hm(now)}</span></div>
     <div class="row full">${monthPill()}</div><div class="colA">
-  ${pwaCard()}
+  ${adminCard()}${pwaCard()}
   ${D.ejemplo?`<div class="note"><span class="grow"><b>Datos de ejemplo.</b> Estos turnos no son tuyos: sirven para probar.</span><button class="tag c-purple" style="border:0;min-height:32px" data-a="borrarEjemplo">Quitar</button></div>`:''}
   <section class="hero">
     <div class="row between"><span class="lbl">Líquido proyectado del mes · aprox.</span><span class="row gap8"><button class="info" data-a="ver" aria-pressed="${VER}" aria-label="${VER?'Ocultar montos':'Mostrar montos'}">${VER?I.eyeOff:I.eye}</button><button class="info" data-a="aviso" aria-label="Por qué es aproximado">${I.info}</button></span></div>
@@ -817,7 +824,7 @@ function vAjustes(){
     <div style="padding:0 14px 12px">${idChip()}</div>
     <div class="set-r"><span class="col" style="min-width:0"><span style="overflow-wrap:anywhere">${USER?esc(USER.email||''):'Sin sesión'}</span><span class="xs muted" id="sync-st">${syncText()}</span></span></div>
     <button class="set-r c-purple" style="width:100%;border-left:0;border-right:0;border-bottom:0;background:none;font-weight:600" data-a="logout"><span>Cerrar sesión</span>${I.arrow}</button></div></section>
-  ${ajustesNotif()}
+  ${ajustesAdmin()}${ajustesNotif()}
   <section class="col gap6" id="aj-rec"><span class="set-t">Recordatorios y ayuda</span><div class="card">
     <label class="set-r"><span class="col" style="min-width:0"><span>Recordatorio por correo</span><span class="xs muted">Los jueves a las 12:00, solo si aún no tienes turnos para la semana siguiente.</span></span><input type="checkbox" id="cfg-rec" data-a="recToggle" ${D.recordatorio?'checked':''} style="width:22px;height:22px;accent-color:var(--purple);flex-shrink:0"></label>
     <button class="set-r c-purple" style="width:100%;border-left:0;border-right:0;border-bottom:0;background:none;font-weight:600" data-a="tutoStart"><span>Ver el tutorial de nuevo</span>${I.arrow}</button></div></section>
@@ -860,6 +867,16 @@ function vAjustes(){
   <section class="col gap6"><span class="set-t">Sobre SUELDITO</span><div class="card pad small" style="line-height:1.5">Sueldito es una referencia para ordenar tus finanzas: te muestra cuánto llevas ganado y cuánto viene según los turnos que registras. Los montos son aproximados. Minutos de diferencia en tus marcas de entrada, salida o break, y ajustes de tu empleador, pueden cambiar el resultado. Tu liquidación oficial es la que vale.</div></section></div>`;
 }
 function vLoading(){ return `<main style="justify-content:center;align-items:center"><span class="label c-purple" style="letter-spacing:.6px">SUELDITO</span><span class="muted">Cargando tus datos…</span></main>`; }
+function vEspera(){
+  const rech=UI.estado==='rechazado';
+  return `<main style="justify-content:center;gap:18px;padding-top:40px"><span class="label c-purple" style="letter-spacing:.6px">SUELDITO</span>
+    <span class="badge ${rech?'b-L':'b-A'}" style="width:64px;height:64px;border-radius:18px">${rech?I.info:I.cal}</span>
+    <h1 class="num" style="font-size:28px;letter-spacing:-.5px;line-height:1.15">${rech?'Tu cuenta no fue aprobada':'Tu cuenta está en revisión'}</h1>
+    <p class="muted" style="font-size:15px;line-height:1.5">${rech?'Por ahora no tienes acceso a SUELDITO. Si crees que es un error, habla con quien te invitó.':'SUELDITO es una app privada. Apenas aprueben tu cuenta podrás entrar. Esta pantalla se actualiza sola.'}</p>
+    <div class="card pad small muted">${esc(USER&&USER.email||'')}</div>
+    ${rech?'':`<button class="btn" data-a="retry">Revisar de nuevo</button>`}
+    <button class="btn ghost" data-a="logout">Cerrar sesión</button></main>`;
+}
 function vError(){ return `<main style="justify-content:center;gap:16px"><h1 class="h1">No pudimos cargar tus datos</h1><p class="muted">Necesitas conexión a internet la primera vez que entras en este dispositivo.</p><button class="btn" data-a="retry">Reintentar</button><button class="btn ghost" data-a="logout">Cerrar sesión</button></main>`; }
 function vAuth(){
   const a=UI.auth, reg=a.modo==='registro', rec=a.modo==='recuperar', inv=leerInvitacion();
@@ -1008,6 +1025,7 @@ function render(){
   else if(UI.step==='auth'){ app.innerHTML=vAuth(); }
   else if(UI.step==='newpass'){ app.innerHTML=vNewPass(); }
   else if(UI.step==='error'){ app.innerHTML=vError(); }
+  else if(UI.step==='espera'){ app.innerHTML=vEspera(); }
   else if(UI.step==='nick'){ app.innerHTML=vNick(); }
   else if(UI.step==='welcome'){ app.innerHTML=vWelcome(); }
   else if(UI.step==='config'){ app.innerHTML=vConfig(); }
@@ -1119,7 +1137,7 @@ async function authGo(){
   try{
     if(a.modo==='recuperar'){ const {error}=await sb.auth.resetPasswordForEmail(a.email,{redirectTo:location.origin+location.pathname}); if(error) throw error;
       a.ok='Si ese correo tiene cuenta, te llegará un enlace en unos minutos.'; }
-    else if(a.modo==='registro'){ const {data,error}=await sb.auth.signUp({email:a.email,password:pw,options:{emailRedirectTo:location.origin+location.pathname}}); if(error) throw error;
+    else if(a.modo==='registro'){ const {data,error}=await sb.auth.signUp({email:a.email,password:pw,options:{emailRedirectTo:location.origin+location.pathname,data:{nick:a.nick||''}}}); if(error) throw error;
       if(data.user && data.user.identities && data.user.identities.length===0) throw new Error('User already registered');
       if(!data.session){ a.modo='login'; a.ok='Cuenta creada. Te enviamos un correo para confirmarla; después inicia sesión aquí.'; } }
     else { const {error}=await sb.auth.signInWithPassword({email:a.email,password:pw}); if(error) throw error; }
@@ -1137,6 +1155,7 @@ async function newPass(){
 async function logout(){
   if(hasPend()) await flush();
   const k=KEY, pend=hasPend();
+  UI.admin=false; UI.adm=null; clearInterval(UI.esperaT);
   try{ await pushOff(true); }catch(e){}
   try{ if(sb) await sb.auth.signOut(); }catch(e){}
   if(!pend && k){ try{ localStorage.removeItem(k); }catch(e){} }
@@ -1149,7 +1168,7 @@ function act(a, el, ev){
   if(perfilAct(a, ds)) return;
   if(amigosAct(a, ds)) return;
   switch(a){
-    case 'tab': if(ds.t==='amigos'){ UI.am.sel=null; UI.am.msg=''; loadAmigos(); } impFree(); UI.imp=null; UI.cmp=null; UI.cmpErr=''; UI.tab=ds.t; UI.animate=ds.t==='resumen'; UI.resetScroll=true; UI.confirmBorrar=false; render(); break;
+    case 'tab': if(ds.t==='ajustes' && UI.admin) loadAdmin(); if(ds.t==='amigos'){ UI.am.sel=null; UI.am.msg=''; loadAmigos(); } impFree(); UI.imp=null; UI.cmp=null; UI.cmpErr=''; UI.tab=ds.t; UI.animate=ds.t==='resumen'; UI.resetScroll=true; UI.confirmBorrar=false; render(); break;
     case 'mes': { UI.cmp=null; UI.cmpErr=''; let [y,m]=UI.ym.split('-').map(Number); m+=Number(ds.d); if(m<1){m=12;y--;} if(m>12){m=1;y++;} UI.ym=y+'-'+pad(m); UI.animate=UI.tab==='resumen'; UI.selDay=null; render(); break; }
     case 'vista': UI.vista=ds.v; render(); break;
     case 'dia': UI.selDay=ds.f; render(); break;
@@ -1160,6 +1179,11 @@ function act(a, el, ev){
     case 'pwToggle': { const i=document.getElementById(ds.for); if(!i) break; const show=i.type==='password'; i.type=show?'text':'password'; el.setAttribute('aria-pressed',show); el.setAttribute('aria-label',show?'Ocultar contraseña':'Mostrar contraseña'); el.innerHTML=show?I.eyeOff:I.eye; i.focus({preventScroll:true}); try{ const n=i.value.length; i.setSelectionRange(n,n); }catch(e){} break; }
     case 'nuevo': openNew(ds.f); break;
     case 'tutoStart': tutoStart(); break;
+    case 'admSi': admDecidir(ds.id,'aprobado'); break;
+    case 'admNo': admDecidir(ds.id,'rechazado'); break;
+    case 'admVer': UI.adm.ver=!UI.adm.ver; render(); break;
+    case 'admRecargar': loadAdmin(); break;
+    case 'admIr': UI.tab='ajustes'; UI.resetScroll=true; render(); setTimeout(()=>{ const x=document.getElementById('aj-admin'); if(x) x.scrollIntoView({block:'start'}); },50); loadAdmin(); break;
     case 'pwaInstalar': if(PWA.prompt){ const p=PWA.prompt; PWA.prompt=null; p.prompt(); p.userChoice.then(r=>{ if(r&&r.outcome==='accepted') PWA.standalone=true; render(); }).catch(()=>{}); } else { UI.sheet={type:'instalar'}; renderSheet(); } break;
     case 'pwaNo': lsMarca('sueldito.noInstalar'); render(); break;
     case 'pushNo': lsMarca('sueldito.noPush'); render(); break;
@@ -2155,6 +2179,31 @@ function leerNuevo(){ try{ const q=new URLSearchParams(location.search); let cam
   const ir=q.get('ir'); if(ir){ if(['resumen','turnos','amigos','liq','ajustes'].includes(ir)) sessionStorage.setItem('sueldito.ir',ir); q.delete('ir'); cambio=true; }
   if(q.has('app')){ q.delete('app'); cambio=true; }
   if(cambio){ const qs=q.toString(); history.replaceState(null,'',location.pathname+(qs?'?'+qs:'')+location.hash); } }catch(e){} }
+/* ================= Administración: aprobar cuentas ================= */
+async function loadAdmin(){ if(!sb||!UI.admin) return; UI.adm=UI.adm||{lista:[],err:'',ver:false};
+  try{ const {data,error}=await sb.rpc('admin_usuarios'); if(error) throw error; UI.adm.lista=data||[]; UI.adm.err=''; }
+  catch(e){ UI.adm.err='No pudimos cargar los usuarios.'; }
+  if(!UI.step && !UI.sheet && (UI.tab==='ajustes'||UI.tab==='resumen')) render(); }
+async function admDecidir(uid, estado){ const u=(UI.adm.lista||[]).find(x=>x.user_id===uid); if(!u) return; const prev=u.estado; u.estado=estado; render();
+  const {error}=await sb.rpc('admin_decidir',{usuario:uid, nuevo:estado});
+  if(error){ u.estado=prev; render(); toast('No se pudo guardar. Inténtalo de nuevo.'); return; }
+  toast(estado==='aprobado'?'Cuenta aprobada':estado==='rechazado'?'Cuenta rechazada':'Acceso quitado'); }
+function adminCard(){ const n=UI.admin&&UI.adm?UI.adm.lista.filter(u=>u.estado==='pendiente').length:0; if(!n) return '';
+  return `<button class="note" style="border:0;width:100%;text-align:left" data-a="admIr">${I.users}<span class="grow"><b>${n} cuenta${n===1?'':'s'} esperando tu aprobación</b></span>${I.next}</button>`; }
+function ajustesAdmin(){
+  if(!UI.admin) return ''; const A=UI.adm||{lista:[],err:''}, pend=A.lista.filter(u=>u.estado==='pendiente'), otros=A.lista.filter(u=>u.estado!=='pendiente');
+  const fecha=t=>{ const d=new Date(t); return d.getDate()+' '+MES3[d.getMonth()]; };
+  const fila=(u,btns)=>`<div class="set-r" style="padding-block:10px"><span class="row gap10" style="min-width:0">${avatar(36,'',u.nick||u.email||'?')}<span class="col" style="min-width:0"><b style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(u.nick||'Sin nickname')}</b><span class="xs muted" style="overflow-wrap:anywhere">${esc(u.email||'')} · ${fecha(u.creada)}</span></span></span><span class="row gap6" style="flex-shrink:0">${btns}</span></div>`;
+  return `<section class="col gap6" id="aj-admin"><span class="set-t">Usuarios · solo tú ves esto</span><div class="card">
+    ${A.err?`<div class="pad small c-danger">${esc(A.err)}</div>`:''}
+    ${pend.length?pend.map(u=>fila(u,`<button class="tag c-danger" style="border:0;min-height:36px;padding:0 10px" data-a="admNo" data-id="${u.user_id}">Rechazar</button><button class="tag c-green" style="border:0;min-height:36px;padding:0 10px;background:var(--green-tint)" data-a="admSi" data-id="${u.user_id}">Aprobar</button>`)).join('')
+      :`<div class="set-r"><span class="small muted">No hay cuentas esperando aprobación.</span><button class="icon-btn" data-a="admRecargar" aria-label="Actualizar lista">${I.arrow}</button></div>`}
+    <button class="set-r c-purple" style="width:100%;border-left:0;border-right:0;border-bottom:0;background:none;font-weight:600" data-a="admVer"><span>${A.ver?'Ocultar':'Ver'} todas las cuentas (${otros.length})</span>${A.ver?I.prev:I.next}</button>
+    ${A.ver?otros.map(u=>fila(u, u.estado==='aprobado'
+        ? (u.user_id===(USER&&USER.id)?'<span class="tag">Tú</span>':`<span class="tag c-green">Aprobada</span><button class="tag" style="border:0;min-height:36px;padding:0 10px" data-a="admNo" data-id="${u.user_id}">Quitar</button>`)
+        : `<span class="tag c-danger">Rechazada</span><button class="tag c-green" style="border:0;min-height:36px;padding:0 10px" data-a="admSi" data-id="${u.user_id}">Aprobar</button>`)).join(''):''}
+  </div></section>`;
+}
 /* ================= App instalable y notificaciones push ================= */
 const VAPID_PUB='BEENTZUw4czzgEKX8ogVhGJgyQYsuZOakcCd2oFCDrXSPExj2R8GBt0Is4n_wFWyml9_W6ynDyuaRiIC347xn7Q';
 const PWA={ prompt:null, reg:null, sub:null,
