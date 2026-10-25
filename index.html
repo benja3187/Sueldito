@@ -46,6 +46,9 @@
 
 
 
+
+
+
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
 <style>
 /* Layout: app de una pantalla; contenido con scroll, barra de pestañas abajo, hojas inferiores para editar. */
@@ -255,8 +258,8 @@ nav.tabs button[aria-current="page"]{color:var(--purple);font-weight:600}
 .pw{position:relative}.pw .input{padding-right:52px}
 .pw .icon-btn{position:absolute;right:2px;top:2px;width:44px;height:44px;color:var(--muted)}
 .oculto{letter-spacing:.06em;opacity:.9}
-.avtabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}.avtabs::-webkit-scrollbar{display:none}
-.avtabs button{flex-shrink:0;height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--border2);background:var(--surf);font-size:13px;font-weight:600;color:var(--muted)}
+.avtabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.avtabs::-webkit-scrollbar{display:none}
+.avtabs button{height:38px;padding:0 6px;border-radius:999px;border:1px solid var(--border2);background:var(--surf);font-size:13px;font-weight:600;color:var(--muted)}
 .avtabs button[aria-selected="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
 .avgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
 .avopt{border:1.5px solid transparent;background:var(--surf);border-radius:14px;padding:8px 4px 6px;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;font-weight:600;color:var(--muted);min-width:0;transition:transform 160ms var(--ease-out),border-color 160ms ease}
@@ -264,6 +267,8 @@ nav.tabs button[aria-current="page"]{color:var(--purple);font-weight:600}
 .avopt[aria-pressed="true"]{border-color:var(--purple);color:var(--ink);background:var(--tint)}
 .avopt:active{transform:scale(.96)}
 svg.avatar{display:block;border-radius:999px}
+svg.avatar.av2{border-radius:22%;border:0}
+.avopt span{white-space:normal;text-align:center;line-height:1.2;max-height:2.4em;overflow:hidden}
 #tuto{position:fixed;inset:0;z-index:50;animation:fade-in 220ms var(--ease-out);transition:opacity 180ms var(--ease-out)}
 #tuto.out,.out#tuto{opacity:0}
 .tu-shade{position:absolute;inset:0;background:rgba(10,8,20,.62)}
@@ -1799,80 +1804,106 @@ function impAct(a, ds){
 
 /* ================= Perfil: nickname y foto ================= */
 const NICK_RE=/^.{2,20}$/;
-/* ================= Avatares de animales ================= */
+/* ================= Avatares de animales (v2, diseño original) ================= */
+const OJOS=(o={})=>{ const y=o.y||53, dx=o.dx||12, rx=o.rx||8.6, ry=o.ry||9.6, p=o.p||'#2A1E3B';
+  return `<ellipse cx="${50-dx}" cy="${y}" rx="${rx}" ry="${ry}" fill="#fff"/><ellipse cx="${50+dx}" cy="${y}" rx="${rx}" ry="${ry}" fill="#fff"/>
+  <circle cx="${50-dx+1.2}" cy="${y+1.4}" r="4.6" fill="${p}"/><circle cx="${50+dx-1.2}" cy="${y+1.4}" r="4.6" fill="${p}"/>
+  <circle cx="${50-dx+2.6}" cy="${y-0.4}" r="1.7" fill="#fff"/><circle cx="${50+dx+0.2}" cy="${y-0.4}" r="1.7" fill="#fff"/>`; };
+const CEJAS=(c,y=40)=>`<path d="M31 ${y+1}q6-4 12-1M57 ${y}q6-3 12 1" fill="none" stroke="${c}" stroke-width="2.6" stroke-linecap="round"/>`;
+const BOCA=(y=70,w=9)=>`<path d="M${50-w} ${y}q${w} ${w*0.95} ${w*2} 0z" fill="#5A1F2B"/><path d="M${50-w*0.55} ${y+w*0.55}q${w*0.55} -${w*0.35} ${w*1.1} 0q-${w*0.55} ${w*0.4} -${w*1.1} 0z" fill="#F07A86"/><path d="M${50-w*0.8} ${y+0.4}h${w*1.6}" stroke="#fff" stroke-width="2" stroke-linecap="round"/>`;
+const SOMBRA=()=>'';
+const AVA={
+  zorro:{n:'Zorro',d:(c=>`<path d="M22 46 26 12 46 30Z" fill="#E4632A"/><path d="M78 46 74 12 54 30Z" fill="#E4632A"/><path d="M27 38 29 21 39 30Z" fill="#FFE3CF"/><path d="M73 38 71 21 61 30Z" fill="#FFE3CF"/>
+    <path d="M18 50q2-26 32-26t32 26q0 30-32 34-32-4-32-34z" fill="#F07A36"/><path d="M18 52q10 2 18 10 6 10 14 12 8-2 14-12 8-8 18-10-2 28-32 32-30-4-32-32z" fill="#FFF3E8"/>
+    ${CEJAS('#B8461A',38)}${OJOS()}<ellipse cx="50" cy="65" rx="4.4" ry="3.2" fill="#2A1E3B"/>${BOCA(70,7)}`)},
+  gato:{n:'Gato',d:(c=>`<path d="M20 50 22 14 44 30Z" fill="#9C98B2"/><path d="M80 50 78 14 56 30Z" fill="#9C98B2"/><path d="M25 40 26 22 37 31Z" fill="#F6B8CB"/><path d="M75 40 74 22 63 31Z" fill="#F6B8CB"/>
+    <ellipse cx="50" cy="56" rx="32" ry="29" fill="#B3B0C8"/><path d="M50 27q-5 6 0 12 5-6 0-12z" fill="#8E8AA6"/><ellipse cx="50" cy="69" rx="13" ry="9" fill="#F1EFF8"/>${SOMBRA('#5B5675')}
+    ${CEJAS('#6E6A88')}${OJOS({p:'#2F6B3A'})}<path d="M46.5 63h7l-3.5 3.6z" fill="#F07A98"/>${BOCA(69,6)}
+    <path d="M14 62l16 1M15 70l15-3M86 62l-16 1M85 70l-15-3" stroke="#6E6A88" stroke-width="1.6" stroke-linecap="round"/>`)},
+  perro:{n:'Perro',d:(c=>`<ellipse cx="50" cy="55" rx="30" ry="29" fill="#D59A5E"/><path d="M22 34q-14 4-10 34 2 9 11 7 6-18 6-38z" fill="#8A5530"/><path d="M78 34q14 4 10 34-2 9-11 7-6-18-6-38z" fill="#8A5530"/>
+    <ellipse cx="63" cy="46" rx="9" ry="8" fill="#B97D45"/><ellipse cx="50" cy="69" rx="15" ry="11" fill="#F6E1C8"/>${SOMBRA('#6B4022')}
+    ${CEJAS('#7A4A26')}${OJOS()}<ellipse cx="50" cy="63" rx="5.6" ry="4" fill="#2A1E3B"/>${BOCA(69,7)}`)},
+  oso:{n:'Oso',d:(c=>`<circle cx="25" cy="31" r="11" fill="#8A5A36"/><circle cx="75" cy="31" r="11" fill="#8A5A36"/><circle cx="25" cy="31" r="5.6" fill="#D9A77D"/><circle cx="75" cy="31" r="5.6" fill="#D9A77D"/>
+    <ellipse cx="50" cy="56" rx="32" ry="29" fill="#A06A42"/><ellipse cx="50" cy="69" rx="14" ry="11" fill="#EBCBA6"/>${SOMBRA('#5A3720')}
+    ${CEJAS('#6A4226')}${OJOS()}<ellipse cx="50" cy="64" rx="5.4" ry="3.8" fill="#2A1E3B"/>${BOCA(70,6.5)}`)},
+  panda:{n:'Panda',d:(c=>`<circle cx="25" cy="31" r="11" fill="#26252F"/><circle cx="75" cy="31" r="11" fill="#26252F"/>
+    <ellipse cx="50" cy="56" rx="32" ry="29" fill="#FAFAFC"/><ellipse cx="38" cy="53" rx="11" ry="12.5" transform="rotate(20 38 53)" fill="#26252F"/><ellipse cx="62" cy="53" rx="11" ry="12.5" transform="rotate(-20 62 53)" fill="#26252F"/>${SOMBRA('#8B87A0')}
+    ${OJOS({rx:6.4,ry:7})}<ellipse cx="50" cy="65" rx="4.6" ry="3.2" fill="#26252F"/>${BOCA(70,6.5)}`)},
+  conejo:{n:'Conejo',d:(c=>`<ellipse cx="37" cy="20" rx="8" ry="21" transform="rotate(-10 37 20)" fill="#E9E4F1"/><ellipse cx="63" cy="20" rx="8" ry="21" transform="rotate(10 63 20)" fill="#E9E4F1"/>
+    <ellipse cx="37" cy="21" rx="3.8" ry="14" transform="rotate(-10 37 21)" fill="#F6B8CB"/><ellipse cx="63" cy="21" rx="3.8" ry="14" transform="rotate(10 63 21)" fill="#F6B8CB"/>
+    <ellipse cx="50" cy="58" rx="30" ry="27" fill="#F2EEF7"/>${SOMBRA('#8B87A0')}${CEJAS('#A79FB8',42)}${OJOS({y:55})}<path d="M46.5 65h7l-3.5 3.4z" fill="#F07A98"/>
+    <path d="M44 70q6 7 12 0" fill="#5A1F2B"/><rect x="46.6" y="70" width="6.8" height="5.4" rx="1.2" fill="#fff"/><path d="M50 70v5.4" stroke="#D8D2E6" stroke-width=".8"/><circle cx="32" cy="66" r="4" fill="#FF8FA8" opacity=".5"/><circle cx="68" cy="66" r="4" fill="#FF8FA8" opacity=".5"/>`)},
+  buho:{n:'Búho',d:(c=>`<path d="M22 38 20 16 38 30Z" fill="#7A5638"/><path d="M78 38 80 16 62 30Z" fill="#7A5638"/><ellipse cx="50" cy="56" rx="32" ry="30" fill="#9A7350"/>
+    <circle cx="38" cy="52" r="13.5" fill="#F3E3C3"/><circle cx="62" cy="52" r="13.5" fill="#F3E3C3"/>${SOMBRA('#4E3420')}
+    <circle cx="38" cy="52" r="8" fill="#F5B731"/><circle cx="62" cy="52" r="8" fill="#F5B731"/><circle cx="38.8" cy="53" r="4.4" fill="#2A1E3B"/><circle cx="61.2" cy="53" r="4.4" fill="#2A1E3B"/><circle cx="40.2" cy="51.4" r="1.6" fill="#fff"/><circle cx="62.6" cy="51.4" r="1.6" fill="#fff"/>
+    <path d="M44 63h12l-6 9z" fill="#F29A2E"/><path d="M36 76q4 3 8 0M46 78q4 3 8 0M56 76q4 3 8 0" fill="none" stroke="#7A5638" stroke-width="1.8" stroke-linecap="round"/>`)},
+  pinguino:{n:'Pingüino',d:(c=>`<ellipse cx="50" cy="56" rx="32" ry="30" fill="#2E3040"/><path d="M50 38c-10-7-24-2-24 14 0 15 11 25 24 26 13-1 24-11 24-26 0-16-14-21-24-14z" fill="#FAFAFC"/>
+    <path d="M50 24q-4 4 0 8" stroke="#2E3040" stroke-width="3" fill="none" stroke-linecap="round"/>${OJOS({y:53,rx:7.4,ry:8.4})}<path d="M42 64h16l-8 8z" fill="#F29A2E"/><circle cx="32" cy="66" r="4" fill="#FF8FA8" opacity=".55"/><circle cx="68" cy="66" r="4" fill="#FF8FA8" opacity=".55"/>`)},
+  mapache:{n:'Mapache',d:(c=>`<path d="M22 44 24 16 42 30Z" fill="#6F6A80"/><path d="M78 44 76 16 58 30Z" fill="#6F6A80"/><path d="M27 37 28 23 36 30Z" fill="#E9E4F1"/><path d="M73 37 72 23 64 30Z" fill="#E9E4F1"/>
+    <ellipse cx="50" cy="56" rx="32" ry="29" fill="#8D88A0"/><path d="M18 52q10-10 20-6t12 0 12 0 20 6q-2 10-14 10-8-4-18-4t-18 4q-12 0-14-10z" fill="#3A3646"/><ellipse cx="50" cy="69" rx="14" ry="10" fill="#EEEAF5"/>${SOMBRA('#3A3646')}
+    ${OJOS({rx:7,ry:7.8})}<ellipse cx="50" cy="64" rx="4.8" ry="3.4" fill="#2A1E3B"/>${BOCA(69,6)}`)},
+  koala:{n:'Koala',d:(c=>`<circle cx="20" cy="40" r="14" fill="#9E9BAE"/><circle cx="80" cy="40" r="14" fill="#9E9BAE"/><circle cx="20" cy="40" r="8" fill="#E6E2EE"/><circle cx="80" cy="40" r="8" fill="#E6E2EE"/>
+    <ellipse cx="50" cy="57" rx="30" ry="28" fill="#B4B1C3"/>${SOMBRA('#5B5675')}${CEJAS('#7B7790',41)}${OJOS({y:52,dx:13,rx:7.6,ry:8.6})}<rect x="42" y="56" width="16" height="14" rx="7" fill="#3E3A4C"/>${BOCA(73,6)}`)},
+  tigre:{n:'Tigre',d:(c=>`<circle cx="25" cy="31" r="10" fill="#F08A2A"/><circle cx="75" cy="31" r="10" fill="#F08A2A"/><circle cx="25" cy="31" r="5" fill="#FFF3E8"/><circle cx="75" cy="31" r="5" fill="#FFF3E8"/>
+    <ellipse cx="50" cy="56" rx="32" ry="29" fill="#F59A36"/><path d="M50 27v9M42 28l2 7M58 28l-2 7M18 52h8M18 60l8-2M82 52h-8M82 60l-8-2" stroke="#3A2A20" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M24 62q12 4 20 12 6 4 6 4t6-4q8-8 20-12-4 22-26 23-22-1-26-23z" fill="#FFF3E8"/>${CEJAS('#3A2A20')}${OJOS({p:'#2E5E2E'})}<path d="M45.5 63h9l-4.5 4z" fill="#E36A86"/>${BOCA(69,6.5)}`)},
+  pudu:{n:'Pudú',d:(c=>`<path d="M36 26l-4-12M64 26l4-12" stroke="#6B4022" stroke-width="3.4" stroke-linecap="round"/><ellipse cx="22" cy="40" rx="11" ry="7" transform="rotate(-25 22 40)" fill="#9A6440"/><ellipse cx="78" cy="40" rx="11" ry="7" transform="rotate(25 78 40)" fill="#9A6440"/>
+    <ellipse cx="50" cy="56" rx="29" ry="29" fill="#B07548"/><ellipse cx="50" cy="71" rx="13" ry="10" fill="#E7C9A6"/>${SOMBRA('#5A3720')}${CEJAS('#6B4022',40)}${OJOS({rx:8,ry:9})}<ellipse cx="50" cy="66" rx="5" ry="3.4" fill="#2A1E3B"/>${BOCA(71,5.5)}`)},
+};
+const AVC={ // accesorios: cabeza, cara, cuello, mano
+  visera:{n:'Visera de crew',s:'h',d:`<path d="M15 31Q50 13 85 31L83 40Q50 24 17 40Z" fill="#DA291C"/><path d="M16 35Q50 18 84 35" fill="none" stroke="#FFC72C" stroke-width="3.4"/>
+    <path d="M22 37Q50 26 78 37Q84 41 78 46Q50 54 22 46Q16 41 22 37Z" fill="#B71F15"/><path d="M24 44Q50 51 76 44" fill="none" stroke="#8E160D" stroke-width="2.2" stroke-linecap="round"/><path d="M30 39Q50 33 70 39" fill="none" stroke="#E8473B" stroke-width="1.8" stroke-linecap="round" opacity=".8"/>`},
+  jockey:{n:'Gorro de crew',s:'h',d:`<g transform="translate(0 -5)"><path d="M17 38Q16 8 50 7 84 8 83 38Z" fill="#DA291C"/><path d="M50 7Q42 22 41 38M50 7Q58 22 59 38" fill="none" stroke="#B71F15" stroke-width="1.6"/><rect x="38" y="20" width="24" height="12" rx="3" fill="#FFC72C"/><path d="M43 26h14" stroke="#DA291C" stroke-width="2.4" stroke-linecap="round"/>
+    <path d="M14 36h72v5H14z" fill="#B71F15"/><path d="M18 40Q50 34 82 40Q88 45 80 49Q50 56 20 49Q12 45 18 40Z" fill="#A81E12"/><path d="M24 47Q50 53 76 47" fill="none" stroke="#7E130B" stroke-width="2" stroke-linecap="round"/><circle cx="50" cy="7.5" r="3" fill="#FFC72C"/></g>`},
+  headset:{n:'Headset drive-thru',s:'h',d:`<path d="M15 50Q13 10 50 10 87 10 85 50" fill="none" stroke="#2B2B3A" stroke-width="6.4" stroke-linecap="round"/><path d="M15 50Q13 10 50 10 87 10 85 50" fill="none" stroke="#4A4A5E" stroke-width="2" stroke-linecap="round"/>
+    <rect x="6" y="40" width="17" height="25" rx="7" fill="#2B2B3A"/><rect x="9" y="44" width="11" height="17" rx="5" fill="#DA291C"/><rect x="77" y="40" width="17" height="25" rx="7" fill="#2B2B3A"/><rect x="80" y="44" width="11" height="17" rx="5" fill="#DA291C"/>
+    <path d="M15 63Q17 78 38 79" fill="none" stroke="#2B2B3A" stroke-width="3.4" stroke-linecap="round"/><rect x="36" y="75.5" width="9" height="7" rx="3.4" fill="#2B2B3A"/><circle cx="40.5" cy="79" r="2" fill="#FFC72C"/>`},
+  gorro:{n:'Gorro de lana',s:'h',d:`<path d="M19 46Q19 14 50 13 81 14 81 46Z" fill="#E2463F"/><rect x="17" y="38" width="66" height="11" rx="5.5" fill="#B9302A"/><circle cx="50" cy="11" r="7" fill="#FFF5EC"/>`},
+  corona:{n:'Corona',s:'h',d:`<path d="M28 40V17l11 10 11-14 11 14 11-10v23Z" fill="#FFC72C" stroke="#D9A514" stroke-width="1.8" stroke-linejoin="round"/><circle cx="50" cy="30" r="3.4" fill="#E2463F"/>`},
+  chef:{n:'Gorro de cocina',s:'h',d:`<path d="M26 38q-10-12 4-20 4-10 16-6 6-6 14 0 12-4 16 6 14 8 4 20z" fill="#fff" stroke="#E3DFEC" stroke-width="1.4"/><rect x="26" y="34" width="48" height="10" rx="2" fill="#F4F2F8" stroke="#E3DFEC" stroke-width="1.4"/>`},
+  lentes:{n:'Lentes',s:'f',d:`<circle cx="38" cy="53" r="11" fill="rgba(255,255,255,.2)" stroke="#2A1E3B" stroke-width="2.8"/><circle cx="62" cy="53" r="11" fill="rgba(255,255,255,.2)" stroke="#2A1E3B" stroke-width="2.8"/><path d="M49 53h2" stroke="#2A1E3B" stroke-width="2.8"/>`},
+  sol:{n:'Lentes de sol',s:'f',d:`<path d="M26 46h22v7q0 10-11 10t-11-10zM52 46h22v7q0 10-11 10t-11-10z" fill="#1E1A2A"/><path d="M48 49h4" stroke="#1E1A2A" stroke-width="3"/><path d="M30 50l4-3M56 50l4-3" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".7"/>`},
+  placa:{n:'Placa plateada CREW',s:'n',d:`<g transform="translate(16 77)"><rect width="42" height="17" rx="3.4" fill="#C3C8D2" stroke="#7F8696" stroke-width="1.4"/><rect x="2" y="2" width="38" height="4" rx="1.6" fill="#ECEFF4"/><text x="21" y="14" font-family="Arial,sans-serif" font-size="9" font-weight="700" text-anchor="middle" fill="#323744" textLength="26" lengthAdjust="spacingAndGlyphs">CREW</text></g>`},
+  entrenador:{n:'Placa dorada entrenador',s:'n',d:`<g transform="translate(9 76)"><rect width="52" height="18" rx="3.4" fill="#F2C94C" stroke="#A97B12" stroke-width="1.4"/><rect x="2" y="2" width="48" height="4.2" rx="1.6" fill="#FCE9A6"/><path d="M8.5 7.6l1.6 3.2 3.5.5-2.5 2.4.6 3.5-3.2-1.7-3.2 1.7.6-3.5-2.5-2.4 3.5-.5z" fill="#A97B12"/><text x="31.5" y="14.4" font-family="Arial,sans-serif" font-size="6.2" font-weight="700" text-anchor="middle" fill="#4E390C" textLength="34" lengthAdjust="spacingAndGlyphs">ENTRENADOR</text></g>`},
+  humita:{n:'Humita',s:'n',d:`<path d="M36 82l14 7-14 7zM64 82l-14 7 14 7z" fill="#DA291C"/><circle cx="50" cy="89" r="3.6" fill="#A81E12"/>`},
+  papas:{n:'Papas fritas',s:'o',d:`<g transform="translate(64 58)"><path d="M6 2l3 12M10.5 0l1.5 13M15 .5v13M19.5 0l-1.4 13M24 2l-3 12" stroke="#FFC72C" stroke-width="3.6" stroke-linecap="round"/><path d="M3 10q12 5 24 0l-2.6 22H5.6z" fill="#DA291C"/><path d="M5 14q10 4 20 0" fill="none" stroke="#A81E12" stroke-width="1.3"/></g>`},
+  burger:{n:'Hamburguesa',s:'o',d:`<g transform="translate(60 66)"><path d="M2 10Q3 0 15 0t13 10z" fill="#E8A33D"/><circle cx="10" cy="4.4" r="1" fill="#FFF5DC"/><circle cx="15" cy="3" r="1" fill="#FFF5DC"/><circle cx="20" cy="4.8" r="1" fill="#FFF5DC"/>
+    <path d="M1 10.5h28l-2 2.6-2.6-2-2.6 2-2.6-2-2.6 2-2.6-2-2.6 2-2.6-2-2.6 2z" fill="#6CC04A"/><path d="M3 13h24l-3 4-2-2z" fill="#FFC72C"/><rect x="2" y="14" width="26" height="5" rx="2.4" fill="#6B3A1E"/><path d="M2.5 20h25q0 5-5.5 5h-14q-5.5 0-5.5-5z" fill="#D9902E"/></g>`},
+  bebida:{n:'Bebida',s:'o',d:`<g transform="translate(66 56)"><path d="M14 0l-3 9" stroke="#FFC72C" stroke-width="2.4" stroke-linecap="round"/><rect x="1" y="8" width="20" height="4.4" rx="1.6" fill="#F3F1F8"/><path d="M2.6 12.4h16.8l-2.2 21H4.8z" fill="#DA291C"/><path d="M3.4 19h15.2" stroke="#FFC72C" stroke-width="2.6"/></g>`},
+  helado:{n:'Cono de helado',s:'o',d:`<g transform="translate(66 54)"><path d="M3 9q0-8 8-8t8 8q0 3-3 3H6q-3 0-3-3z" fill="#FDF6EC"/><path d="M5 12q6 2 12 0" fill="none" stroke="#E7DCCB" stroke-width="1"/><path d="M2.5 12h17L11 34z" fill="#E0A458"/><path d="M5 15l10 8M8 13l8 6M16 15l-10 8" stroke="#B97A35" stroke-width="1"/></g>`},
+  nuggets:{n:'Caja de nuggets',s:'o',d:`<g transform="translate(60 64)"><ellipse cx="9" cy="4" rx="5" ry="3.4" fill="#E2A24A"/><ellipse cx="18" cy="3" rx="5" ry="3.4" fill="#D69034"/><ellipse cx="13" cy="6" rx="5" ry="3.4" fill="#ECB45E"/><path d="M1 6h26l-2 18H3z" fill="#FFC72C"/><path d="M1 6h26l-1 4H2z" fill="#E7B11F"/><path d="M8 14h12" stroke="#DA291C" stroke-width="2.4" stroke-linecap="round"/></g>`},
+  destacador:{n:'Destacador delivery',s:'o',d:`<g transform="translate(78 50) rotate(24) scale(1.3)"><rect x="-5" y="0" width="10" height="9" rx="2.4" fill="#DA291C"/><rect x="-5.6" y="8" width="11.2" height="22" rx="2.6" fill="#FFE234"/><rect x="-5.6" y="14" width="11.2" height="6" fill="#FFC72C"/><path d="M-3.6 30h7.2l-1.6 6h-4z" fill="#F4F2F8"/><path d="M-2 36h4l-1 3h-2z" fill="#FFE234"/><path d="M5 2v10" stroke="#B71F15" stroke-width="1.6" stroke-linecap="round"/></g>`},
+  bandeja:{n:'Bandeja',s:'o',d:`<g transform="translate(54 66)"><path d="M6 8l3-8h6l3 8z" fill="#DA291C"/><path d="M8 0h8M10 -3l2 3" stroke="#FFC72C" stroke-width="2" stroke-linecap="round"/><path d="M20 10q0-6 6-6t6 6z" fill="#E8A33D"/><rect x="0" y="9" width="36" height="7" rx="2.4" fill="#B5462F"/><path d="M2 12h32" stroke="#9A3826" stroke-width="1"/></g>`},
+};
 const AV={
-  bg:['#6A3DD1','#5BE0A6','#FFB547','#FF7A8A','#4FB3E8','#24174F','#F2D15C','#9BD16B'],
-  animales:[['zorro','Zorro'],['gato','Gato'],['perro','Perro'],['oso','Oso'],['panda','Panda'],['conejo','Conejo'],['buho','Búho'],['pinguino','Pingüino']],
-  cabeza:[['-','Nada'],['gorro','Gorro de lana'],['jockey','Jockey'],['visera','Visera de crew'],['corona','Corona'],['audifonos','Audífonos']],
-  cara:[['-','Nada'],['lentes','Lentes'],['sol','Lentes de sol'],['rubor','Mejillas']],
-  cuello:[['-','Nada'],['humita','Humita'],['bufanda','Bufanda']],
-  objeto:[['-','Nada'],['papas','Papas fritas'],['hamburguesa','Hamburguesa'],['bebida','Bebida'],['helado','Helado']]
+  bg:['#6A3DD1','#2ECC8F','#FFB547','#FF7A8A','#4FB3E8','#24174F','#F2D15C','#9BD16B','#DA291C','#3D2A86'],
+  animales:Object.keys(AVA).map(k=>[k,AVA[k].n]),
+  slots:{h:'Cabeza',f:'Cara',n:'Pecho',o:'Mano'}
 };
+const avOpts = slot => [['-','Nada']].concat(Object.keys(AVC).filter(k=>AVC[k].s===slot).map(k=>[k,AVC[k].n]));
 const AV0={a:'zorro',c:0,h:'-',f:'-',n:'-',o:'-'};
-function avParse(s){ if(!s||!s.startsWith('av1:')) return null; const p=s.split(':'); const v={a:p[1],c:+p[2]||0,h:p[3]||'-',f:p[4]||'-',n:p[5]||'-',o:p[6]||'-'};
-  if(!AV.animales.some(x=>x[0]===v.a)) v.a='zorro'; return v; }
-const avStr = v => ['av1',v.a,v.c,v.h,v.f,v.n,v.o].join(':');
-const EYES=(c,w)=>`<circle cx="41" cy="55" r="3.8" fill="${c||'#1D1530'}"/><circle cx="59" cy="55" r="3.8" fill="${c||'#1D1530'}"/><circle cx="42.3" cy="53.8" r="1.3" fill="${w||'#fff'}"/><circle cx="60.3" cy="53.8" r="1.3" fill="${w||'#fff'}"/>`;
-const SMILE='<path d="M45.5 68.5q4.5 3.4 9 0" fill="none" stroke="#1D1530" stroke-width="2" stroke-linecap="round"/>';
-const AV_ANIMAL={
-  zorro:`<path d="M26 44 31 15 47 33Z" fill="#E8722A"/><path d="M74 44 69 15 53 33Z" fill="#E8722A"/><path d="M30 37 32 23 40 32Z" fill="#FFD9BF"/><path d="M70 37 68 23 60 32Z" fill="#FFD9BF"/>
-    <ellipse cx="50" cy="57" rx="28" ry="25" fill="#F08A3C"/><path d="M22 58q10 6 28 20 18-14 28-20-2 22-28 24-26-2-28-24z" fill="#FFF5EC"/>${EYES()}<ellipse cx="50" cy="64" rx="3.8" ry="2.8" fill="#2B1B12"/>${SMILE}`,
-  gato:`<path d="M25 46 28 16 46 32Z" fill="#8E8CA3"/><path d="M75 46 72 16 54 32Z" fill="#8E8CA3"/><path d="M30 38 31 24 39 32Z" fill="#F7B6C8"/><path d="M70 38 69 24 61 32Z" fill="#F7B6C8"/>
-    <ellipse cx="50" cy="57" rx="28" ry="25" fill="#A5A3B8"/><ellipse cx="50" cy="68" rx="11" ry="8" fill="#EDEBF3"/>${EYES('#2E6B3A')}<path d="M47.5 63.5h5l-2.5 3z" fill="#F07A98"/>${SMILE}
-    <path d="M28 64h12M29 70l11-3M72 64H60M71 70l-11-3" stroke="#5E5B70" stroke-width="1.4" stroke-linecap="round"/>`,
-  perro:`<ellipse cx="50" cy="56" rx="27" ry="25" fill="#C08A57"/><path d="M25 38q-12 6-8 30 2 8 9 6 4-14 5-30z" fill="#7A4E2B"/><path d="M75 38q12 6 8 30-2 8-9 6-4-14-5-30z" fill="#7A4E2B"/>
-    <ellipse cx="62" cy="47" rx="7" ry="6" fill="#A87444"/><ellipse cx="50" cy="68" rx="13" ry="10" fill="#F2DCC2"/>${EYES()}<ellipse cx="50" cy="63.5" rx="4.6" ry="3.3" fill="#2B1B12"/>${SMILE}<path d="M50 71v4" stroke="#E2667E" stroke-width="3" stroke-linecap="round"/>`,
-  oso:`<circle cx="29" cy="35" r="10" fill="#8A5A36"/><circle cx="71" cy="35" r="10" fill="#8A5A36"/><circle cx="29" cy="35" r="5" fill="#D4A27A"/><circle cx="71" cy="35" r="5" fill="#D4A27A"/>
-    <ellipse cx="50" cy="57" rx="28" ry="25" fill="#9C6A42"/><ellipse cx="50" cy="67" rx="12" ry="9.5" fill="#E7C7A2"/>${EYES()}<ellipse cx="50" cy="63" rx="4.5" ry="3.2" fill="#2B1B12"/>${SMILE}`,
-  panda:`<circle cx="29" cy="35" r="10" fill="#22232B"/><circle cx="71" cy="35" r="10" fill="#22232B"/>
-    <ellipse cx="50" cy="57" rx="28" ry="25" fill="#FAFAFC"/><ellipse cx="40" cy="55.5" rx="7" ry="8.5" transform="rotate(25 40 55.5)" fill="#22232B"/><ellipse cx="60" cy="55.5" rx="7" ry="8.5" transform="rotate(-25 60 55.5)" fill="#22232B"/>
-    ${EYES('#fff','#22232B')}<ellipse cx="50" cy="64" rx="4" ry="2.8" fill="#22232B"/>${SMILE}`,
-  conejo:`<ellipse cx="39" cy="22" rx="7" ry="19" transform="rotate(-8 39 22)" fill="#F1EEF6"/><ellipse cx="61" cy="22" rx="7" ry="19" transform="rotate(8 61 22)" fill="#F1EEF6"/>
-    <ellipse cx="39" cy="23" rx="3.4" ry="13" transform="rotate(-8 39 23)" fill="#F7B6C8"/><ellipse cx="61" cy="23" rx="3.4" ry="13" transform="rotate(8 61 23)" fill="#F7B6C8"/>
-    <ellipse cx="50" cy="58" rx="27" ry="24" fill="#F1EEF6"/>${EYES()}<path d="M47 63h6l-3 3z" fill="#F07A98"/><path d="M45.5 67.5q4.5 3.4 9 0" fill="none" stroke="#1D1530" stroke-width="2" stroke-linecap="round"/><rect x="47.5" y="69" width="5" height="5" rx="1" fill="#fff" stroke="#D8D2E6" stroke-width=".8"/>`,
-  buho:`<path d="M27 40 28 22 40 33Z" fill="#6E4F33"/><path d="M73 40 72 22 60 33Z" fill="#6E4F33"/><ellipse cx="50" cy="57" rx="28" ry="26" fill="#8B6B4A"/>
-    <circle cx="40" cy="54" r="10.5" fill="#F1E3C6"/><circle cx="60" cy="54" r="10.5" fill="#F1E3C6"/><circle cx="40" cy="54" r="5" fill="#1D1530"/><circle cx="60" cy="54" r="5" fill="#1D1530"/><circle cx="41.6" cy="52.4" r="1.6" fill="#fff"/><circle cx="61.6" cy="52.4" r="1.6" fill="#fff"/>
-    <path d="M46 62h8l-4 7z" fill="#F2A33A"/><path d="M38 74q4 3 8 0M48 76q4 3 8 0M58 74q4 3 8 0" fill="none" stroke="#6E4F33" stroke-width="1.6" stroke-linecap="round"/>`,
-  pinguino:`<ellipse cx="50" cy="56" rx="28" ry="26" fill="#2A2C38"/><path d="M50 40c-9-6-21-2-21 13 0 13 9 22 21 23 12-1 21-10 21-23 0-15-12-19-21-13z" fill="#FAFAFC"/>
-    ${EYES()}<path d="M44.5 62.5h11l-5.5 6z" fill="#F29A2E"/><circle cx="35" cy="64" r="3" fill="#F7B6C8" opacity=".7"/><circle cx="65" cy="64" r="3" fill="#F7B6C8" opacity=".7"/>`
-};
-const AV_CABEZA={
-  gorro:`<path d="M23 45Q23 17 50 16 77 17 77 45Z" fill="#E2463F"/><rect x="21" y="38" width="58" height="10" rx="5" fill="#B9302A"/><path d="M30 38v10M38 38v10M46 38v10M54 38v10M62 38v10M70 38v10" stroke="#A3271F" stroke-width="1.4"/><circle cx="50" cy="14" r="6.5" fill="#FFF5EC"/>`,
-  jockey:`<path d="M24 43Q25 17 50 17 75 17 76 43Z" fill="#2D7DD2"/><path d="M50 17v26" stroke="#2466AD" stroke-width="1.4"/><path d="M47 40Q72 34 90 43 74 50 47 46Z" fill="#1F5FA3"/><circle cx="50" cy="17.5" r="2.4" fill="#1F5FA3"/>`,
-  visera:`<path d="M22 44Q50 46 78 44 76 53 50 53 24 53 22 44Z" fill="#9E1B12"/><path d="M23 38Q50 26 77 38V45Q50 34 23 45Z" fill="#DA291C"/><path d="M24 40.5Q50 29.5 76 40.5" fill="none" stroke="#FFC72C" stroke-width="2.4"/>`,
-  corona:`<path d="M29 40V19l10.5 10L50 14l10.5 15L71 19v21Z" fill="#F7C531" stroke="#D9A514" stroke-width="1.6" stroke-linejoin="round"/><circle cx="50" cy="31" r="3" fill="#E2463F"/><circle cx="37" cy="34" r="2.2" fill="#2D7DD2"/><circle cx="63" cy="34" r="2.2" fill="#2D7DD2"/>`,
-  audifonos:`<path d="M23 54Q22 19 50 19 78 19 77 54" fill="none" stroke="#2B2B3A" stroke-width="5" stroke-linecap="round"/><rect x="16" y="45" width="12" height="20" rx="5" fill="#FF5A7A"/><rect x="72" y="45" width="12" height="20" rx="5" fill="#FF5A7A"/>`
-};
-const AV_CARA={
-  lentes:`<circle cx="41" cy="55" r="7.5" fill="rgba(255,255,255,.25)" stroke="#1D1530" stroke-width="2.4"/><circle cx="59" cy="55" r="7.5" fill="rgba(255,255,255,.25)" stroke="#1D1530" stroke-width="2.4"/><path d="M48.5 55h3M33.5 54l-6-2M66.5 54l6-2" stroke="#1D1530" stroke-width="2.4" stroke-linecap="round"/>`,
-  sol:`<path d="M32 50h16v5q0 7-8 7t-8-7zM52 50h16v5q0 7-8 7t-8-7z" fill="#1D1530"/><path d="M48 52h4M32 51l-5-1.5M68 51l5-1.5" stroke="#1D1530" stroke-width="2.4" stroke-linecap="round"/><path d="M35 53l3-2M55 53l3-2" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".7"/>`,
-  rubor:`<ellipse cx="34" cy="64" rx="5" ry="3.2" fill="#FF7A9A" opacity=".55"/><ellipse cx="66" cy="64" rx="5" ry="3.2" fill="#FF7A9A" opacity=".55"/>`
-};
-const AV_CUELLO={
-  humita:`<path d="M37 80l13 6-13 6zM63 80l-13 6 13 6z" fill="#E2463F"/><circle cx="50" cy="86" r="3.4" fill="#B9302A"/>`,
-  bufanda:`<path d="M25 76q25 14 50 0l1 9q-26 15-52 0z" fill="#2D7DD2"/><path d="M60 82l7 16h-9l-4-14z" fill="#2466AD"/><path d="M31 81l1 6M39 84l1 6M47 85v6" stroke="#F7C531" stroke-width="2"/>`
-};
-const AV_OBJETO={
-  papas:`<g transform="translate(61 60)"><path d="M5 1.5l3 11M9 0l1.5 12.5M13 .5v12M17 0l-1 12.5M21 1.5l-3 11" stroke="#FFC72C" stroke-width="3.4" stroke-linecap="round"/><path d="M2 10q11 5 22 0l-2.4 20H4.4z" fill="#DA291C"/><path d="M4 13q9 4 18 0" fill="none" stroke="#B71F15" stroke-width="1.2"/></g>`,
-  hamburguesa:`<g transform="translate(59 67)"><path d="M2 9Q3 0 14 0t12 9z" fill="#E8A33D"/><circle cx="9" cy="4" r=".9" fill="#FFF5DC"/><circle cx="14" cy="2.6" r=".9" fill="#FFF5DC"/><circle cx="19" cy="4.4" r=".9" fill="#FFF5DC"/>
-    <path d="M1 9.5h26l-2 2.5-2.5-2-2.5 2-2.5-2-2.5 2-2.5-2-2.5 2-2.5-2-2.5 2z" fill="#6CC04A"/><path d="M3 12h22l-3 4-2-2z" fill="#FFC72C"/><rect x="2" y="13" width="24" height="4.5" rx="2.2" fill="#6B3A1E"/><path d="M2.5 18.5h23q0 4.5-5 4.5h-13q-5 0-5-4.5z" fill="#D9902E"/></g>`,
-  bebida:`<g transform="translate(64 58)"><path d="M13 0l-3 8" stroke="#2D7DD2" stroke-width="2.2" stroke-linecap="round"/><rect x="1" y="7" width="18" height="4" rx="1.5" fill="#F3F1F8"/><path d="M2.5 11h15l-2 19h-11z" fill="#DA291C"/><path d="M3.3 17h13.4" stroke="#FFC72C" stroke-width="2.4"/></g>`,
-  helado:`<g transform="translate(65 57)"><circle cx="9" cy="8" r="8" fill="#FFB3C7"/><circle cx="5" cy="5" r="2" fill="#fff" opacity=".5"/><path d="M1.5 12h15L9 32z" fill="#E0A458"/><path d="M4 15l9 7M7 13l7 5M14 15l-9 7" stroke="#B97A35" stroke-width="1"/></g>`
-};
+const AV1MAP={audifonos:'headset',hamburguesa:'burger',bufanda:'-',rubor:'-'};
+function avParse(s){ if(!s||typeof s!=='string') return null;
+  if(s.startsWith('av2:')){ const p=s.split(':'); const v={a:p[1],c:+p[2]||0,h:p[3]||'-',f:p[4]||'-',n:p[5]||'-',o:p[6]||'-'}; if(!AVA[v.a]) v.a='zorro'; ['h','f','n','o'].forEach(k=>{ if(v[k]!=='-' && !(AVC[v[k]]&&AVC[v[k]].s===k)) v[k]='-'; }); return v; }
+  if(s.startsWith('av1:')){ const p=s.split(':'), m=x=>{ x=x||'-'; x=AV1MAP[x]!==undefined?AV1MAP[x]:x; return AVC[x]?x:'-'; };
+    return {a:AVA[p[1]]?p[1]:'zorro', c:+p[2]||0, h:m(p[3]), f:m(p[4]), n:m(p[5]), o:m(p[6])}; }
+  return null; }
+const avStr = v => ['av2',v.a,v.c,v.h,v.f,v.n,v.o].join(':');
 function avSvg(v, size){
-  const id='avc'+Math.random().toString(36).slice(2,8);
-  return `<svg class="avatar" width="${size}" height="${size}" viewBox="0 0 100 100" role="img" aria-label="Avatar de ${esc((AV.animales.find(x=>x[0]===v.a)||['',''])[1].toLowerCase())}" style="width:${size}px;height:${size}px;padding:0;background:${AV.bg[v.c]||AV.bg[0]}">
-    <defs><clipPath id="${id}"><circle cx="50" cy="50" r="50"/></clipPath></defs><g clip-path="url(#${id})"><g transform="translate(0 6)">
-    ${AV_ANIMAL[v.a]||AV_ANIMAL.zorro}${AV_CARA[v.f]||''}${AV_CUELLO[v.n]||''}${AV_CABEZA[v.h]||''}${AV_OBJETO[v.o]||''}</g></g></svg>`;
+  const id='avc'+Math.random().toString(36).slice(2,8), parts={h:'',f:'',n:'',o:''};
+  ['h','f','n','o'].forEach(k=>{ const c=AVC[v[k]]; if(c && c.s===k) parts[k]=c.d; });
+  return `<svg class="avatar av2" width="${size}" height="${size}" viewBox="0 0 100 100" role="img" aria-label="Avatar de ${esc((AVA[v.a]||AVA.zorro).n.toLowerCase())}" style="width:${size}px;height:${size}px">
+    <defs><clipPath id="${id}"><rect width="100" height="100" rx="22"/></clipPath></defs><g clip-path="url(#${id})"><rect width="100" height="100" fill="${AV.bg[v.c]||AV.bg[0]}"/><circle cx="82" cy="12" r="30" fill="#fff" opacity=".08"/>
+    <g transform="translate(0 4)">${(AVA[v.a]||AVA.zorro).d()}${parts.f}${parts.n}${parts.h}${parts.o}</g></g></svg>`;
 }
 function avEditor(){
-  const v=UI.av.v, tab=UI.av.tab, tabs=[['a','Animal'],['c','Color'],['h','Cabeza'],['f','Cara'],['n','Cuello'],['o','Objeto']];
-  const list = tab==='a'?AV.animales : tab==='c'?AV.bg.map((c,i)=>[i,'Color '+(i+1)]) : tab==='h'?AV.cabeza : tab==='f'?AV.cara : tab==='n'?AV.cuello : AV.objeto;
+  const v=UI.av.v, tab=UI.av.tab, tabs=[['a','Animal'],['c','Color'],['h','Cabeza'],['f','Cara'],['n','Pecho'],['o','Mano']];
+  const list = tab==='a'?AV.animales : tab==='c'?AV.bg.map((c,i)=>[i,'Color '+(i+1)]) : avOpts(tab);
   return `<div class="col gap12">
-    <div class="row" style="justify-content:center">${avSvg(v,128)}</div>
+    <div class="row" style="justify-content:center">${avSvg(v,136)}</div>
     <div class="avtabs" role="tablist" aria-label="Partes del avatar">${tabs.map(([k,l])=>`<button role="tab" aria-selected="${tab===k}" data-a="avTab" data-k="${k}">${l}</button>`).join('')}</div>
-    <div class="avgrid" role="group" aria-label="Opciones">${list.map(([val,l])=>{ const w={...v,[tab]:tab==='c'?val:val}; const on=String(v[tab])===String(val);
-      return `<button class="avopt" data-a="avPick" data-k="${tab}" data-v="${val}" aria-pressed="${on}" aria-label="${esc(l)}" title="${esc(l)}">${avSvg(w,52)}<span>${esc(l)}</span></button>`; }).join('')}</div>
+    <div class="avgrid" role="group" aria-label="Opciones">${list.map(([val,l])=>{ const w={...v,[tab]:val}; const on=String(v[tab])===String(val);
+      return `<button class="avopt" data-a="avPick" data-k="${tab}" data-v="${val}" aria-pressed="${on}" aria-label="${esc(l)}" title="${esc(l)}">${avSvg(w,56)}<span>${esc(l)}</span></button>`; }).join('')}</div>
     <div class="grid2"><button class="btn ghost" data-a="avNo">Cancelar</button><button class="btn" data-a="avOk">Usar avatar</button></div></div>`;
 }
 
